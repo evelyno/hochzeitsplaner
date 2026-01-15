@@ -47,6 +47,7 @@ model Event {
   tasks       Task[]
   guests      Guest[]
   budgetItems BudgetItem[]
+  vendors     Vendor[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
@@ -59,6 +60,57 @@ model Task {
   event       Event    @relation(fields: [eventId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+enum VendorCategory {
+  VENUE
+  CATERING
+  PHOTOGRAPHY
+  VIDEOGRAPHY
+  FLORIST
+  MUSIC_DJ
+  MUSIC_BAND
+  HAIR_MAKEUP
+  DRESS
+  SUIT
+  CAKE
+  DECORATION
+  TRANSPORTATION
+  INVITATIONS
+  ENTERTAINMENT
+  OTHER
+}
+
+enum VendorStatus {
+  RESEARCHING
+  CONTACTED
+  QUOTE_RECEIVED
+  BOOKED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model Vendor {
+  id              String         @id @default(cuid())
+  eventId         String
+  event           Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  category        VendorCategory
+  companyName     String
+  contactPerson   String?
+  email           String?
+  phone           String?
+  website         String?
+  status          VendorStatus   @default(RESEARCHING)
+  quotedPrice     Float?
+  finalPrice      Float?
+  depositPaid     Float          @default(0)
+  contractSigned  Boolean        @default(false)
+  contractUrl     String?        // URL to uploaded contract
+  notes           String?
+  rating          Int?           // 1-5 stars
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 

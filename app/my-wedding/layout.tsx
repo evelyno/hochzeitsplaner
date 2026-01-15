@@ -8,7 +8,8 @@ import {
     Users,
     LogOut,
     Settings,
-    DollarSign
+    DollarSign,
+    Briefcase
 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import styles from './client-dashboard.module.css'
@@ -39,6 +40,9 @@ export default function ClientLayout({
                 </Link>
                 <Link href="/my-wedding/budget" className={`${styles.navItem} ${isActive('/my-wedding/budget')}`} title="Budget">
                     <DollarSign size={20} />
+                </Link>
+                <Link href="/my-wedding/vendors" className={`${styles.navItem} ${isActive('/my-wedding/vendors')}`} title="Dienstleister">
+                    <Briefcase size={20} />
                 </Link>
                 <Link href="/my-wedding/guests" className={`${styles.navItem} ${isActive('/my-wedding/guests')}`} title="Guests">
                     <Users size={20} />

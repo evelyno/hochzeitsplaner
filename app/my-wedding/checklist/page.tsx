@@ -16,17 +16,31 @@ export default function ChecklistPage() {
     const [newTask, setNewTask] = useState('')
     const [editingId, setEditingId] = useState<string | null>(null)
     const [editText, setEditText] = useState('')
-
-    // Mock event ID - in production, get from session/context
-    const eventId = 'mock-event-id'
+    const [eventId, setEventId] = useState<string | null>(null)
 
     useEffect(() => {
-        fetchTasks()
+        fetchUserEvent()
     }, [])
 
-    const fetchTasks = async () => {
+    const fetchUserEvent = async () => {
         try {
-            const res = await fetch(`/api/tasks?eventId=${eventId}`)
+            const res = await fetch('/api/user-event')
+            if (res.ok) {
+                const event = await res.json()
+                setEventId(event.id)
+                fetchTasks(event.id)
+            } else {
+                setIsLoading(false)
+            }
+        } catch (error) {
+            console.error('Failed to fetch user event:', error)
+            setIsLoading(false)
+        }
+    }
+
+    const fetchTasks = async (evtId: string) => {
+        try {
+            const res = await fetch(`/api/tasks?eventId=${evtId}`)
             if (res.ok) {
                 const data = await res.json()
                 setTasks(data)
@@ -39,7 +53,7 @@ export default function ChecklistPage() {
     }
 
     const addTask = async () => {
-        if (!newTask.trim()) return
+        if (!newTask.trim() || !eventId) return
 
         try {
             const res = await fetch('/api/tasks', {

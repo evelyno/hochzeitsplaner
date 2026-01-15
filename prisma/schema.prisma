@@ -8,8 +8,9 @@ datasource db {
 }
 
 enum Role {
-  OPERATOR
-  CLIENT
+  SUPER_ADMIN
+  ADMIN
+  USER
 }
 
 model User {
@@ -17,7 +18,7 @@ model User {
   email     String   @unique
   password  String
   name      String?
-  role      Role     @default(CLIENT)
+  role      Role     @default(USER)
   venueId   String?
   venue     Venue?   @relation(fields: [venueId], references: [id])
   events    Event[]  // Relation to events (for Clients)

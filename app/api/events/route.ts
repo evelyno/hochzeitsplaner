@@ -48,7 +48,7 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json()
-        const { clientName, clientEmail, eventName, eventDate, budget, venueId } = body
+        const { clientName, clientEmail, clientPassword, eventName, eventDate, budget, venueId } = body
 
         if (!clientName || !eventName || !eventDate) {
             return new NextResponse("Missing required fields", { status: 400 })
@@ -60,6 +60,9 @@ export async function POST(req: Request) {
             return new NextResponse("Venue ID required", { status: 400 })
         }
 
+        // Use provided password or generate a random one
+        const password = clientPassword || Math.random().toString(36).slice(-10)
+
         // Create client user and event in a transaction
         const result = await prisma.$transaction(async (tx) => {
             // Create client user
@@ -67,7 +70,7 @@ export async function POST(req: Request) {
                 data: {
                     name: clientName,
                     email: clientEmail || `${clientName.toLowerCase().replace(/\s+/g, '.')}@temp.com`,
-                    password: await import('bcryptjs').then(bcrypt => bcrypt.hash(Math.random().toString(36).slice(-8), 10)),
+                    password: await import('bcryptjs').then(bcrypt => bcrypt.hash(password, 10)),
                     role: 'USER'
                 }
             })
@@ -92,7 +95,7 @@ export async function POST(req: Request) {
                 }
             })
 
-            return event
+            return { event, password }
         })
 
         return NextResponse.json(result)

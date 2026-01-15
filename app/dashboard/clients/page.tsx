@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import styles from '../dashboard.module.css'
-import { Plus, X, Calendar, Euro, Mail, User } from 'lucide-react'
+import { Plus, X, Calendar, Euro, Mail, User, Copy, Check } from 'lucide-react'
 
 interface Event {
     id: string
@@ -20,9 +20,14 @@ export default function ClientsPage() {
     const [events, setEvents] = useState<Event[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [showModal, setShowModal] = useState(false)
+    const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+    const [createdPassword, setCreatedPassword] = useState('')
+    const [createdEmail, setCreatedEmail] = useState('')
+    const [copied, setCopied] = useState(false)
     const [formData, setFormData] = useState({
         clientName: '',
         clientEmail: '',
+        clientPassword: '',
         eventName: '',
         eventDate: '',
         budget: ''
@@ -57,12 +62,16 @@ export default function ClientsPage() {
             })
 
             if (res.ok) {
-                const newEvent = await res.json()
-                setEvents([...events, newEvent])
+                const result = await res.json()
+                setEvents([...events, result.event])
+                setCreatedPassword(result.password)
+                setCreatedEmail(formData.clientEmail || result.event.client.email)
                 setShowModal(false)
+                setShowSuccessMessage(true)
                 setFormData({
                     clientName: '',
                     clientEmail: '',
+                    clientPassword: '',
                     eventName: '',
                     eventDate: '',
                     budget: ''
@@ -71,6 +80,12 @@ export default function ClientsPage() {
         } catch (error) {
             console.error('Failed to create event:', error)
         }
+    }
+
+    const copyToClipboard = () => {
+        navigator.clipboard.writeText(`Email: ${createdEmail}\nPasswort: ${createdPassword}`)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
     }
 
     return (
@@ -99,6 +114,52 @@ export default function ClientsPage() {
                     <Plus size={18} /> Neuer Kunde
                 </button>
             </div>
+
+            {/* Success Message */}
+            {showSuccessMessage && (
+                <div style={{
+                    background: '#e8f5e9',
+                    border: '1px solid #4caf50',
+                    borderRadius: 8,
+                    padding: '1.5rem',
+                    marginBottom: '2rem'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                        <div style={{ flex: 1 }}>
+                            <h3 style={{ margin: 0, marginBottom: '0.5rem', color: '#2e7d32', fontSize: '1.1rem' }}>✓ Kunde erfolgreich erstellt!</h3>
+                            <p style={{ margin: 0, marginBottom: '1rem', color: '#666' }}>Bitte notieren Sie die Login-Daten für das Paar:</p>
+                            <div style={{ background: 'white', padding: '1rem', borderRadius: 6, fontFamily: 'monospace' }}>
+                                <div><strong>Email:</strong> {createdEmail}</div>
+                                <div><strong>Passwort:</strong> {createdPassword}</div>
+                            </div>
+                            <button
+                                onClick={copyToClipboard}
+                                style={{
+                                    marginTop: '1rem',
+                                    background: '#4caf50',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: 6,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    fontSize: '0.9rem'
+                                }}
+                            >
+                                {copied ? <><Check size={16} /> Kopiert!</> : <><Copy size={16} /> Zugangsdaten kopieren</>}
+                            </button>
+                        </div>
+                        <button
+                            onClick={() => setShowSuccessMessage(false)}
+                            style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#999' }}
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Events Grid */}
             {isLoading ? (
@@ -210,10 +271,11 @@ export default function ClientsPage() {
 
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>
-                                    E-Mail
+                                    E-Mail *
                                 </label>
                                 <input
                                     type="email"
+                                    required
                                     value={formData.clientEmail}
                                     onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
                                     placeholder="anna.max@beispiel.de"
@@ -226,6 +288,29 @@ export default function ClientsPage() {
                                         outline: 'none'
                                     }}
                                 />
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', fontWeight: 500 }}>
+                                    Passwort (optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.clientPassword}
+                                    onChange={(e) => setFormData({ ...formData, clientPassword: e.target.value })}
+                                    placeholder="Leer lassen für automatisches Passwort"
+                                    style={{
+                                        width: '100%',
+                                        padding: '0.75rem',
+                                        border: '1px solid #eee',
+                                        borderRadius: 8,
+                                        fontSize: '0.95rem',
+                                        outline: 'none'
+                                    }}
+                                />
+                                <div style={{ fontSize: '0.8rem', color: '#999', marginTop: '0.25rem' }}>
+                                    Falls leer, wird ein zufälliges Passwort generiert
+                                </div>
                             </div>
 
                             <div style={{ marginBottom: '1.5rem' }}>

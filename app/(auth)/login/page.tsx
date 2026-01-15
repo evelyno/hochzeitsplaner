@@ -26,7 +26,7 @@ export default function LoginPage() {
             })
 
             if (result?.error) {
-                setError('Invalid credentials')
+                setError('Ungültige Anmeldedaten')
             } else {
                 // Fetch session to get user role
                 const response = await fetch('/api/auth/session')
@@ -38,13 +38,12 @@ export default function LoginPage() {
                 } else if (session?.user?.role === 'ADMIN' || session?.user?.role === 'OPERATOR' || session?.user?.role === 'SUPER_ADMIN') {
                     router.push('/dashboard')
                 } else {
-                    // Fallback
                     router.push('/dashboard')
                 }
                 router.refresh()
             }
         } catch (err) {
-            setError('An error occurred during login')
+            setError('Ein Fehler ist aufgetreten')
         } finally {
             setLoading(false)
         }
@@ -53,25 +52,25 @@ export default function LoginPage() {
     return (
         <div className={styles.container}>
             <div className={styles.card}>
-                <h1 className={styles.title}>Welcome Back</h1>
+                <h1 className={styles.title}>Willkommen zurück</h1>
 
                 {error && <div className={styles.error}>{error}</div>}
 
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.inputGroup}>
-                        <label className={styles.label}>Email</label>
+                        <label className={styles.label}>E-Mail</label>
                         <input
                             className={styles.input}
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            placeholder="name@venue.com"
+                            placeholder="name@beispiel.de"
                         />
                     </div>
 
                     <div className={styles.inputGroup}>
-                        <label className={styles.label}>Password</label>
+                        <label className={styles.label}>Passwort</label>
                         <input
                             className={styles.input}
                             type="password"
@@ -87,14 +86,14 @@ export default function LoginPage() {
                         className={styles.button}
                         disabled={loading}
                     >
-                        {loading ? 'Signing in...' : 'Sign In'}
+                        {loading ? 'Anmelden...' : 'Anmelden'}
                     </button>
                 </form>
 
                 <div className={styles.footer}>
-                    Don't have an account?{' '}
+                    Noch kein Konto?{' '}
                     <Link href="/register" className={styles.link}>
-                        Register Venue
+                        Location registrieren
                     </Link>
                 </div>
             </div>

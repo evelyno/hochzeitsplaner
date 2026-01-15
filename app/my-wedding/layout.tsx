@@ -7,7 +7,8 @@ import {
     ListTodo,
     Users,
     LogOut,
-    Settings
+    Settings,
+    DollarSign
 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import styles from './client-dashboard.module.css'
@@ -35,6 +36,9 @@ export default function ClientLayout({
                 </Link>
                 <Link href="/my-wedding/checklist" className={`${styles.navItem} ${isActive('/my-wedding/checklist')}`} title="Checklist">
                     <ListTodo size={20} />
+                </Link>
+                <Link href="/my-wedding/budget" className={`${styles.navItem} ${isActive('/my-wedding/budget')}`} title="Budget">
+                    <DollarSign size={20} />
                 </Link>
                 <Link href="/my-wedding/guests" className={`${styles.navItem} ${isActive('/my-wedding/guests')}`} title="Guests">
                     <Users size={20} />

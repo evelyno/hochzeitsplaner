@@ -36,18 +36,19 @@ model Venue {
 }
 
 model Event {
-  id        String   @id @default(cuid())
-  name      String
-  date      DateTime
-  budget    Float?
-  venueId   String
-  venue     Venue    @relation(fields: [venueId], references: [id])
-  clientId  String
-  client    User     @relation(fields: [clientId], references: [id])
-  tasks     Task[]
-  guests    Guest[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String       @id @default(cuid())
+  name        String
+  date        DateTime
+  budget      Float?
+  venueId     String
+  venue       Venue        @relation(fields: [venueId], references: [id])
+  clientId    String
+  client      User         @relation(fields: [clientId], references: [id])
+  tasks       Task[]
+  guests      Guest[]
+  budgetItems BudgetItem[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 model Task {
@@ -70,3 +71,42 @@ model Guest {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+enum BudgetCategory {
+  VENUE
+  CATERING
+  PHOTOGRAPHY
+  VIDEOGRAPHY
+  FLOWERS
+  MUSIC
+  DRESS
+  SUIT
+  RINGS
+  INVITATIONS
+  DECORATION
+  TRANSPORTATION
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+}
+
+model BudgetItem {
+  id            String         @id @default(cuid())
+  eventId       String
+  event         Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  category      BudgetCategory
+  name          String
+  plannedAmount Float
+  actualAmount  Float          @default(0)
+  paidAmount    Float          @default(0)
+  paymentStatus PaymentStatus  @default(PENDING)
+  vendor        String?
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+

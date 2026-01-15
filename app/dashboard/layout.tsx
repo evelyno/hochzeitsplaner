@@ -9,7 +9,8 @@ import {
     Settings,
     LogOut,
     Search,
-    Bell
+    Bell,
+    DollarSign
 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import styles from './dashboard.module.css'
@@ -42,6 +43,10 @@ export default function DashboardLayout({
                     <Link href="/dashboard/clients" className={`${styles.navItem} ${isActive('/dashboard/clients')}`}>
                         <Users size={18} />
                         Clients
+                    </Link>
+                    <Link href="/dashboard/budget" className={`${styles.navItem} ${isActive('/dashboard/budget')}`}>
+                        <DollarSign size={18} />
+                        Budget
                     </Link>
                     <Link href="/dashboard/calendar" className={`${styles.navItem} ${isActive('/dashboard/calendar')}`}>
                         <Calendar size={18} />

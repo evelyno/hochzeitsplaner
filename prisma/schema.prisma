@@ -61,16 +61,44 @@ model Task {
   updatedAt   DateTime @updatedAt
 }
 
-model Guest {
-  id        String   @id @default(cuid())
-  name      String
-  email     String?
-  rsvp      Boolean  @default(false)
-  eventId   String
-  event     Event    @relation(fields: [eventId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+enum RSVPStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }
+
+enum MealPreference {
+  STANDARD
+  VEGETARIAN
+  VEGAN
+  GLUTEN_FREE
+  HALAL
+  KOSHER
+  OTHER
+}
+
+model Guest {
+  id              String         @id @default(cuid())
+  name            String
+  email           String?
+  phone           String?
+  rsvpStatus      RSVPStatus     @default(PENDING)
+  mealPreference  MealPreference @default(STANDARD)
+  dietaryNotes    String?        // Allergies, special requirements
+  tableNumber     Int?
+  tableGroup      String?        // e.g., "Family", "Friends", "Work"
+  isPlusOne       Boolean        @default(false)
+  plusOneOf       String?        // Name of the main guest
+  hasChildren     Boolean        @default(false)
+  childrenCount   Int            @default(0)
+  notes           String?
+  eventId         String
+  event           Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
 
 enum BudgetCategory {
   VENUE

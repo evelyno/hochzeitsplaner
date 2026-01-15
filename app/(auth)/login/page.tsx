@@ -28,7 +28,19 @@ export default function LoginPage() {
             if (result?.error) {
                 setError('Invalid credentials')
             } else {
-                router.push('/dashboard')
+                // Fetch session to get user role
+                const response = await fetch('/api/auth/session')
+                const session = await response.json()
+
+                // Redirect based on role
+                if (session?.user?.role === 'USER' || session?.user?.role === 'CLIENT') {
+                    router.push('/my-wedding')
+                } else if (session?.user?.role === 'ADMIN' || session?.user?.role === 'OPERATOR' || session?.user?.role === 'SUPER_ADMIN') {
+                    router.push('/dashboard')
+                } else {
+                    // Fallback
+                    router.push('/dashboard')
+                }
                 router.refresh()
             }
         } catch (err) {

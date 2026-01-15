@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OPERATOR
+  CLIENT
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(CLIENT)
+  venueId   String?
+  venue     Venue?   @relation(fields: [venueId], references: [id])
+  events    Event[]  // Relation to events (for Clients)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Venue {
+  id        String   @id @default(cuid())
+  name      String
+  operators User[]
+  events    Event[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  name      String
+  date      DateTime
+  budget    Float?
+  venueId   String
+  venue     Venue    @relation(fields: [venueId], references: [id])
+  clientId  String
+  client    User     @relation(fields: [clientId], references: [id])
+  tasks     Task[]
+  guests    Guest[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  description String
+  isCompleted Boolean  @default(false)
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Guest {
+  id        String   @id @default(cuid())
+  name      String
+  email     String?
+  rsvp      Boolean  @default(false)
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

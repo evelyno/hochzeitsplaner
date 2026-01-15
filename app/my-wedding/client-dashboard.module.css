@@ -1,0 +1,113 @@
+/* Inherit some base styles but override specific client needs */
+.layout {
+    display: flex;
+    min-height: 100vh;
+    background-color: #fcfcfc;
+}
+
+.sidebar {
+    width: 80px;
+    /* Slim sidebar for clients */
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 0;
+    border-right: 1px solid #eee;
+    position: fixed;
+    height: 100vh;
+    z-index: 10;
+}
+
+.brand {
+    margin-bottom: 3rem;
+    color: #d4a373;
+}
+
+.navItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    color: #999;
+    text-decoration: none;
+    margin-bottom: 1.5rem;
+    transition: all 0.2s;
+}
+
+.navItem:hover,
+.activeNavItem {
+    background-color: #fff5eb;
+    color: #d4a373;
+}
+
+.mainContent {
+    flex: 1;
+    margin-left: 80px;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    height: 80px;
+    padding: 0 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pageContent {
+    padding: 2rem 3rem;
+    flex: 1;
+}
+
+.heroCard {
+    background: linear-gradient(135deg, #d4a373 0%, #a9845b 100%);
+    color: white;
+    border-radius: 20px;
+    padding: 3rem;
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(212, 163, 115, 0.3);
+}
+
+.countdown {
+    display: flex;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.countdownItem {
+    display: flex;
+    flex-direction: column;
+}
+
+.countdownValue {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.countdownLabel {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}

@@ -36,20 +36,38 @@ model Venue {
 }
 
 model Event {
-  id          String       @id @default(cuid())
-  name        String
-  date        DateTime
-  budget      Float?
-  venueId     String
-  venue       Venue        @relation(fields: [venueId], references: [id])
-  clientId    String
-  client      User         @relation(fields: [clientId], references: [id])
-  tasks       Task[]
-  guests      Guest[]
-  budgetItems BudgetItem[]
-  vendors     Vendor[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id             String          @id @default(cuid())
+  name           String
+  date           DateTime
+  budget         Float?
+  venueId        String
+  venue          Venue           @relation(fields: [venueId], references: [id])
+  clientId       String
+  client         User            @relation(fields: [clientId], references: [id])
+  tasks          Task[]
+  guests         Guest[]
+  budgetItems    BudgetItem[]
+  vendors        Vendor[]
+  timelineEvents TimelineEvent[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model TimelineEvent {
+  id          String   @id @default(cuid())
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  time        String   // Format: "14:30"
+  title       String
+  description String?
+  duration    Int?     // Duration in minutes
+  location    String?
+  category    String   @default("OTHER") // CEREMONY, RECEPTION, PHOTOS, etc.
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([eventId])
 }
 
 model Task {

@@ -37,7 +37,7 @@ export async function POST(req: Request) {
                 email,
                 password: hashedPassword,
                 name: venueName, // Default name to venue name for now
-                role: "OPERATOR",
+                role: "ADMIN",
                 venueId: venue.id
             }
         })

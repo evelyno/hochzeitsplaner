@@ -54,6 +54,8 @@ model Event {
   vendors        Vendor[]
   tables         Table[]
   moodboardItems MoodboardItem[]
+  playlistSongs  PlaylistSong[]
+  giftItems      GiftItem[]
   timelineEvents TimelineEvent[]
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
@@ -249,5 +251,38 @@ model BudgetItem {
   notes         String?
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+}
+
+model PlaylistSong {
+  id          String   @id @default(cuid())
+  title       String
+  artist      String
+  category    String   @default("GENERAL") // CEREMONY, RECEPTION, DANCE, DINNER
+  notes       String?
+  requestedBy String?
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([eventId])
+}
+
+model GiftItem {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float?
+  url         String?
+  imageUrl    String?
+  category    String   @default("GENERAL") // HOME, KITCHEN, EXPERIENCE, CASH
+  isPurchased Boolean  @default(false)
+  purchasedBy String?
+  eventId     String
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([eventId])
 }
 

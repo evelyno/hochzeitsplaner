@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import styles from './client-dashboard.module.css'
-import { Home, Users, CheckSquare, Clock, Euro, Briefcase, Calendar, LogOut, Menu, X, User, Image, Grid3x3 } from 'lucide-react'
+import { Home, Users, CheckSquare, Clock, Euro, Briefcase, Calendar, LogOut, Menu, X, User, Image, Grid3x3, Music, Gift } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
@@ -21,7 +21,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         { href: '/my-wedding/seating', label: 'Sitzplan', icon: Grid3x3 },
         { href: '/my-wedding/vendors', label: 'Dienstleister', icon: Briefcase },
         { href: '/my-wedding/calendar', label: 'Kalender', icon: Calendar },
+        { href: '/my-wedding/playlist', label: 'Playlist', icon: Music },
         { href: '/my-wedding/moodboard', label: 'Moodboard', icon: Image },
+        { href: '/my-wedding/gifts', label: 'Geschenke', icon: Gift },
         { href: '/my-wedding/profile', label: 'Profil', icon: User },
     ]
 

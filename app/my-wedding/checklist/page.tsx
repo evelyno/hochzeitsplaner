@@ -161,36 +161,59 @@ export default function ChecklistPage() {
 
         const wedding = new Date(weddingDate)
 
-        // Calculate date ranges based on category
-        const ranges: Record<string, { monthsBefore: number, monthsRange: number }> = {
-            '12_MONTHS': { monthsBefore: 12, monthsRange: 0 },
-            '9_MONTHS': { monthsBefore: 12, monthsRange: 3 },
-            '6_MONTHS': { monthsBefore: 9, monthsRange: 3 },
-            '4_MONTHS': { monthsBefore: 6, monthsRange: 2 },
-            '2_MONTHS': { monthsBefore: 4, monthsRange: 2 },
-            '1_MONTH': { monthsBefore: 2, monthsRange: 1 },
-            '2_WEEKS': { monthsBefore: 1, monthsRange: 0.5 },
-            '1_WEEK': { monthsBefore: 0.25, monthsRange: 0 },
-            'DAY_BEFORE': { monthsBefore: 0, monthsRange: 0 },
+        // Define date ranges for each category (in months before wedding)
+        // Format: { start: months before wedding for start, end: months before wedding for end }
+        const ranges: Record<string, { start: number, end: number }> = {
+            '12_MONTHS': { start: 12, end: 12 },      // 12 months before
+            '9_MONTHS': { start: 12, end: 9 },        // 12-9 months before
+            '6_MONTHS': { start: 9, end: 6 },         // 9-6 months before
+            '4_MONTHS': { start: 6, end: 4 },         // 6-4 months before
+            '2_MONTHS': { start: 4, end: 2 },         // 4-2 months before
+            '1_MONTH': { start: 2, end: 1 },          // 2-1 months before
+            '2_WEEKS': { start: 1, end: 0.5 },        // 1 month to 2 weeks before
+            '1_WEEK': { start: 0.25, end: 0 },        // 1 week before to wedding
+            'DAY_BEFORE': { start: 0.033, end: 0.033 }, // 1 day before
+            'AFTER': { start: -1, end: -1 },          // After wedding
         }
 
         const range = ranges[category]
         if (!range) return baseLabel
 
-        // Calculate start date (months before wedding)
+        // Calculate start date (X months before wedding)
         const startDate = new Date(wedding)
-        startDate.setMonth(startDate.getMonth() - range.monthsBefore)
-
-        // Calculate end date
-        const endDate = new Date(startDate)
-        if (range.monthsRange > 0) {
-            endDate.setMonth(endDate.getMonth() + range.monthsRange)
-        } else if (category === '1_WEEK') {
-            endDate.setDate(endDate.getDate() + 7)
-        } else if (category === 'DAY_BEFORE') {
-            return `${baseLabel} (${startDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })})`
+        if (range.start >= 1) {
+            startDate.setMonth(startDate.getMonth() - Math.floor(range.start))
+        } else if (range.start > 0) {
+            // For fractions of months, use days
+            const daysToSubtract = Math.round(range.start * 30)
+            startDate.setDate(startDate.getDate() - daysToSubtract)
         } else {
-            return baseLabel
+            // After wedding
+            startDate.setMonth(startDate.getMonth() + Math.abs(range.start))
+        }
+
+        // Calculate end date (Y months before wedding)
+        const endDate = new Date(wedding)
+        if (range.end >= 1) {
+            endDate.setMonth(endDate.getMonth() - Math.floor(range.end))
+        } else if (range.end > 0) {
+            // For fractions of months, use days
+            const daysToSubtract = Math.round(range.end * 30)
+            endDate.setDate(endDate.getDate() - daysToSubtract)
+        } else if (range.end < 0) {
+            // After wedding
+            endDate.setMonth(endDate.getMonth() + Math.abs(range.end))
+        }
+
+        // Special cases
+        if (category === 'DAY_BEFORE') {
+            const dayBefore = new Date(wedding)
+            dayBefore.setDate(dayBefore.getDate() - 1)
+            return `${baseLabel} (${dayBefore.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })})`
+        }
+
+        if (category === '12_MONTHS') {
+            return `${baseLabel} (${startDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })})`
         }
 
         const startStr = startDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -242,9 +265,9 @@ export default function ChecklistPage() {
 
     // Category order
     const categoryOrder = [
-        "12_10_MONTHS", "9_7_MONTHS", "6_5_MONTHS", "4_3_MONTHS",
-        "2_MONTHS", "4_2_WEEKS", "1_WEEK", "1_DAY",
-        "WEDDING_DAY", "AFTER_WEDDING", "GENERAL"
+        "12_MONTHS", "9_MONTHS", "6_MONTHS", "4_MONTHS",
+        "2_MONTHS", "1_MONTH", "2_WEEKS", "1_WEEK",
+        "DAY_BEFORE", "AFTER", "GENERAL"
     ]
 
     return (

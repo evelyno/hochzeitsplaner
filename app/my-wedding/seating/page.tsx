@@ -35,7 +35,18 @@ export default function SeatingPage() {
     const [selectedSeat, setSelectedSeat] = useState<{ tableId: string, seatNumber: number } | null>(null)
     const [editFormData, setEditFormData] = useState({ name: '', capacity: 8, shape: 'ROUND' })
     const [draggedGuest, setDraggedGuest] = useState<Guest | null>(null)
+    const [isMobile, setIsMobile] = useState(false)
     const canvasRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        // Detect mobile on client-side only
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 768)
+        }
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     useEffect(() => {
         fetchData()
@@ -298,7 +309,7 @@ export default function SeatingPage() {
                 </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 768 ? '1fr 320px' : '1fr', gap: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 320px', gap: '2rem' }}>
                 <div
                     ref={canvasRef}
                     onMouseMove={handleDragMove}
@@ -306,7 +317,7 @@ export default function SeatingPage() {
                     onMouseLeave={handleDragEnd}
                     onTouchMove={handleDragMove}
                     onTouchEnd={handleDragEnd}
-                    style={{ background: '#f9f9f9', borderRadius: 16, padding: '1rem', minHeight: window.innerWidth > 768 ? 700 : 400, position: 'relative', cursor: draggingTable ? 'grabbing' : 'default', overflow: 'hidden', touchAction: 'none' }}
+                    style={{ background: '#f9f9f9', borderRadius: 16, padding: '1rem', minHeight: isMobile ? 400 : 700, position: 'relative', cursor: draggingTable ? 'grabbing' : 'default', overflow: 'hidden', touchAction: 'none' }}
                 >
                     {tables.map(table => (
                         <React.Fragment key={table.id}>
@@ -388,13 +399,13 @@ export default function SeatingPage() {
                             <UsersIcon size={20} /> Nicht zugewiesen ({unassignedGuests.length})
                         </h3>
                         <p style={{ fontSize: '0.85rem', opacity: 0.7, marginBottom: '1rem' }}>
-                            {window.innerWidth > 768 ? 'Ziehen Sie Gäste auf freie Plätze' : 'Tippen Sie auf einen Platz, um einen Gast zuzuweisen'}
+                            {isMobile ? 'Tippen Sie auf einen Platz, um einen Gast zuzuweisen' : 'Ziehen Sie Gäste auf freie Plätze'}
                         </p>
                         <div style={{ maxHeight: 400, overflowY: 'auto' }}>
                             {unassignedGuests.map(guest => (
                                 <div
                                     key={guest.id}
-                                    draggable={window.innerWidth > 768}
+                                    draggable={!isMobile}
                                     onDragStart={(e) => {
                                         setDraggedGuest(guest)
                                         e.dataTransfer.effectAllowed = 'move'

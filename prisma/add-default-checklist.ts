@@ -37,7 +37,7 @@ async function addDefaultChecklistToExistingUser() {
 
         // Create default checklist items
         await prisma.task.createMany({
-            data: DEFAULT_CHECKLIST_ITEMS.map(item => ({
+            data: defaultChecklistItems.map((item: any) => ({
                 eventId: event.id,
                 description: item.description,
                 category: item.category,
@@ -46,7 +46,7 @@ async function addDefaultChecklistToExistingUser() {
             }))
         })
 
-        console.log(`✅ Successfully added ${DEFAULT_CHECKLIST_ITEMS.length} default checklist items!`)
+        console.log(`✅ Successfully added ${defaultChecklistItems.length} default checklist items!`)
         console.log('\nYou can now login as user@client.com and see the full checklist.')
 
     } catch (error) {

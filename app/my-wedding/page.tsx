@@ -36,6 +36,17 @@ export default function ClientDashboard() {
     const [stats, setStats] = useState<DashboardStats | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [eventId, setEventId] = useState<string | null>(null)
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        // Detect mobile on client-side only
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth <= 1024)
+        }
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     useEffect(() => {
         fetchDashboardData()
@@ -236,7 +247,7 @@ export default function ClientDashboard() {
             </div>
 
             {/* Main Content Grid */}
-            <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 1024 ? '2fr 1fr' : '1fr', gap: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr', gap: '2rem' }}>
                 {/* Upcoming Tasks */}
                 <div style={{ background: 'white', padding: '2rem', borderRadius: 16, boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>

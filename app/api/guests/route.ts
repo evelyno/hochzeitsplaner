@@ -69,7 +69,6 @@ export async function POST(req: Request) {
                 rsvpStatus: rsvpStatus || 'PENDING',
                 mealPreference: mealPreference || 'STANDARD',
                 dietaryNotes,
-                tableNumber: tableNumber ? parseInt(tableNumber) : undefined,
                 tableGroup,
                 isPlusOne: isPlusOne || false,
                 plusOneOf,

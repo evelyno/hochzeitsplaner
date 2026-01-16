@@ -1,13 +1,130 @@
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-rgb: 245, 245, 245;
-  --primary-color: #d4a373; /* Example gold/beige tone from design */
+  /* Color Palette - Wedding Theme (Warm, Elegant, Modern) */
+  --primary: #d4a373;
+  --primary-hover: #c59260;
+  --primary-light: #fdf5ed;
+  --primary-rgb: 212, 163, 115;
+
+  --secondary: #faedcd;
+  --secondary-hover: #f0e0b8;
+
+  --accent-green: #ccd5ae;
+  --accent-pink: #f4e4e9;
+
+  /* Text Colors */
+  --text-primary: #2d3436;
+  --text-secondary: #636e72;
+  --text-tertiary: #b2bec3;
+
+  /* Backgrounds */
+  --bg-body: #f8f9fc;
+  --bg-card: #ffffff;
+  --bg-sidebar: #ffffff;
+
+  /* Status Colors */
+  --success: #6c5ce7;
+  /* Modern purple/blue for success/action */
+  --success-bg: #eaecfb;
+  --warning: #fdcb6e;
+  --error: #ff7675;
+  --info: #74b9ff;
+
+  /* Shadows - Soft & Modern */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 4px 20px rgba(212, 163, 115, 0.25);
+
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: rgb(var(--background-rgb));
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-primary);
+  background: var(--bg-body);
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   margin: 0;
   padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Global Micro-Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--transition-normal) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--transition-normal) forwards;
+}
+
+/* Modern Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e0e0e0;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d4a373;
+}
+
+/* Global Components */
+button {
+  transition: all var(--transition-fast);
+}
+
+button:active {
+  transform: scale(0.98);
 }

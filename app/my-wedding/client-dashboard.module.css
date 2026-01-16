@@ -2,113 +2,193 @@
 .layout {
     display: flex;
     min-height: 100vh;
-    background-color: #fcfcfc;
+    background-color: var(--bg-body);
 }
 
 .sidebar {
-    width: 260px;
-    background-color: white;
+    width: 280px;
+    background-color: var(--bg-sidebar);
     display: flex;
     flex-direction: column;
-    padding: 0;
-    border-right: 1px solid #eee;
+    padding: 2rem 1.5rem;
+    border-right: none;
     position: fixed;
     height: 100vh;
     z-index: 10;
     overflow-y: auto;
+    box-shadow: var(--shadow-sm);
 }
 
 .sidebarHeader {
-    padding: 2rem 1.5rem;
-    border-bottom: 1px solid #eee;
+    padding: 0 0 2.5rem 0.5rem;
+    margin-bottom: 1rem;
 }
 
 .sidebarHeader h2 {
     margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1a1a1a;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    font-family: 'Playfair Display', serif;
+    /* Optional: Use serif for elegance */
+    letter-spacing: -0.5px;
 }
 
 .nav {
     flex: 1;
-    padding: 1rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .navItem {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1.5rem;
-    color: #666;
+    gap: 1rem;
+    padding: 0.85rem 1.25rem;
+    color: var(--text-secondary);
     text-decoration: none;
-    transition: all 0.2s;
-    border-left: 3px solid transparent;
+    transition: all var(--transition-normal);
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
 }
 
 .navItem:hover {
-    background-color: #f9f9f9;
-    color: #d4a373;
+    background-color: var(--primary-light);
+    color: var(--primary);
+    transform: translateX(4px);
 }
 
 .navItemActive {
-    background-color: #fff5eb;
-    color: #d4a373;
-    border-left-color: #d4a373;
-    font-weight: 500;
+    background-color: var(--primary);
+    color: white !important;
+    box-shadow: var(--shadow-glow);
 }
 
-.navItem span {
-    font-size: 0.95rem;
+.navItemActive:hover {
+    background-color: var(--primary-hover);
+    color: white !important;
+    transform: translateX(4px);
+}
+
+.navItem svg {
+    transition: transform var(--transition-fast);
+}
+
+.navItem:hover svg {
+    transform: scale(1.1);
 }
 
 .main {
     flex: 1;
-    margin-left: 260px;
-    padding: 2rem 3rem;
+    margin-left: 280px;
+    padding: 2.5rem 3.5rem;
     min-height: 100vh;
+    animation: fadeIn 0.6s ease-out;
 }
 
+/* Modern Card Styles */
 .card {
-    background: white;
-    border-radius: 16px;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
     padding: 2rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow-md);
+    transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+    border: 1px solid rgba(0, 0, 0, 0.01);
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
 }
 
 .heroCard {
-    background: linear-gradient(135deg, #d4a373 0%, #a9845b 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, #a9845b 100%);
     color: white;
-    border-radius: 20px;
-    padding: 3rem;
+    border-radius: var(--radius-xl);
+    padding: 3.5rem;
     margin-bottom: 3rem;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(212, 163, 115, 0.3);
+    box-shadow: var(--shadow-glow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.heroCard::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
+    opacity: 0.6;
+    pointer-events: none;
 }
 
 .countdown {
     display: flex;
-    gap: 2rem;
+    gap: 2.5rem;
     margin-top: 2rem;
 }
 
 .countdownItem {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-md);
+    min-width: 80px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.countdownValue {
+.countdownNumber {
     font-size: 2.5rem;
     font-weight: 700;
     line-height: 1;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .countdownLabel {
-    font-size: 0.8rem;
-    opacity: 0.8;
+    font-size: 0.85rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    opacity: 0.9;
+}
+
+/* Mobile Menu Styles */
+.mobileMenuToggle {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 100;
+    padding: 0.5rem;
+    background: white;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    border: none;
+    color: var(--text-primary);
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+    z-index: 5;
+    opacity: 0;
+    animation: fadeIn 0.3s forwards;
 }
 
 .grid {
@@ -119,6 +199,15 @@
 
 /* Responsive Design */
 @media (max-width: 1024px) {
+    .sidebar {
+        width: 240px;
+    }
+
+    .main {
+        margin-left: 240px;
+        padding: 2rem;
+    }
+
     .grid {
         grid-template-columns: 1fr;
     }
@@ -126,32 +215,50 @@
 
 @media (max-width: 768px) {
     .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
+        transform: translateX(-100%);
+        transition: transform var(--transition-normal);
+        width: 280px;
+        height: 100vh;
+        /* Ensure it covers full height when open */
+        position: fixed;
+        /* Keep it fixed for overlay */
         border-right: none;
-        border-bottom: 1px solid #eee;
+        border-bottom: none;
+    }
+
+    .sidebar.open {
+        transform: translateX(0);
+        box-shadow: var(--shadow-lg);
     }
 
     .main {
         margin-left: 0;
-        padding: 1.5rem;
+        padding: 6rem 1.5rem 2rem 1.5rem;
+        /* Top padding for fixed mobile header if needed */
     }
 
     .layout {
         flex-direction: column;
     }
 
+    .mobileMenuToggle {
+        display: block;
+    }
+
     .heroCard {
+        flex-direction: column;
+        align-items: flex-start;
         padding: 2rem;
     }
 
     .countdown {
+        flex-wrap: wrap;
         gap: 1rem;
+        width: 100%;
     }
 
-    .countdownValue {
-        font-size: 2rem;
+    .countdownItem {
+        flex: 1;
     }
 }
 

@@ -1,14 +1,16 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import styles from './client-dashboard.module.css'
-import { Home, Users, CheckSquare, Clock, Euro, Briefcase, Calendar, LogOut } from 'lucide-react'
+import { Home, Users, CheckSquare, Clock, Euro, Briefcase, Calendar, LogOut, Menu, X } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
     const { data: session } = useSession()
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
     const navItems = [
         { href: '/my-wedding', label: 'Übersicht', icon: Home },
@@ -20,9 +22,26 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         { href: '/my-wedding/calendar', label: 'Kalender', icon: Calendar },
     ]
 
+    const closeMobileMenu = () => setMobileMenuOpen(false)
+
     return (
         <div className={styles.layout}>
-            <aside className={styles.sidebar}>
+            {/* Mobile Menu Toggle */}
+            <button
+                className={styles.mobileMenuToggle}
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                aria-label="Toggle menu"
+            >
+                {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+
+            {/* Mobile Overlay */}
+            <div
+                className={`${styles.mobileOverlay} ${mobileMenuOpen ? styles.show : ''}`}
+                onClick={closeMobileMenu}
+            />
+
+            <aside className={`${styles.sidebar} ${mobileMenuOpen ? styles.open : ''}`}>
                 <div className={styles.sidebarHeader}>
                     <h2>Meine Hochzeit</h2>
                 </div>
@@ -35,6 +54,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                                 key={item.href}
                                 href={item.href}
                                 className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
+                                onClick={closeMobileMenu}
                             >
                                 <Icon size={20} />
                                 <span>{item.label}</span>

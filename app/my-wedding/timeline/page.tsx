@@ -140,22 +140,17 @@ export default function TimelinePage() {
             return
         }
 
-        // Reorder events
         const reordered = [...events]
         reordered.splice(dragIndex, 1)
         reordered.splice(dropIndex, 0, draggedItem)
 
-        // Recalculate times
         const withNewTimes = recalculateTimes(reordered)
-
-        // Update order property
         const withNewOrder = withNewTimes.map((ev, idx) => ({ ...ev, order: idx }))
 
         setEvents(withNewOrder)
         setDraggedItem(null)
         setDragOverIndex(null)
 
-        // Save to backend
         try {
             await Promise.all(
                 withNewOrder.map(ev =>
@@ -271,7 +266,7 @@ export default function TimelinePage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                     <h1 className={styles.title}>Ablaufplan</h1>
-                    <p style={{ opacity: 0.7 }}>Organisieren Sie Ihren Hochzeitstag</p>
+                    <p style={{ opacity: 0.7 }}>Klicken Sie auf ein Ereignis zum Bearbeiten</p>
                 </div>
                 <button
                     onClick={() => { setEditingEvent(null); resetForm(); setShowModal(true); }}
@@ -292,81 +287,159 @@ export default function TimelinePage() {
                         const isDropTarget = dragOverIndex === index
 
                         return (
-                            <div
-                                key={event.id}
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, event)}
-                                onDragOver={(e) => handleDragOver(e, index)}
-                                onDragEnd={handleDragEnd}
-                                onDrop={(e) => handleDrop(e, index)}
-                                style={{
-                                    background: 'white',
-                                    borderRadius: 12,
-                                    padding: '1.5rem',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                                    border: `2px solid ${conflict ? '#e74c3c' : isDropTarget ? '#d4a373' : 'transparent'}`,
-                                    opacity: isDragging ? 0.5 : 1,
-                                    cursor: 'grab',
-                                    transition: 'all 0.2s',
-                                    position: 'relative'
-                                }}
-                            >
-                                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                                    <div style={{ color: '#999', cursor: 'grab', paddingTop: '0.25rem' }}>
-                                        <GripVertical size={20} />
+                            <div key={event.id} style={{ position: 'relative' }}>
+                                {isDropTarget && draggedItem?.id !== event.id && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: -4,
+                                        left: 0,
+                                        right: 0,
+                                        height: 4,
+                                        background: 'linear-gradient(90deg, #d4a373, #a9845b)',
+                                        borderRadius: 2,
+                                        zIndex: 10,
+                                        boxShadow: '0 0 10px rgba(212, 163, 115, 0.5)',
+                                        animation: 'pulse 1s ease-in-out infinite'
+                                    }} />
+                                )}
+
+                                <div
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, event)}
+                                    onDragOver={(e) => handleDragOver(e, index)}
+                                    onDragEnd={handleDragEnd}
+                                    onDrop={(e) => handleDrop(e, index)}
+                                    onClick={() => openEditModal(event)}
+                                    style={{
+                                        background: 'white',
+                                        borderRadius: 12,
+                                        padding: '1.5rem',
+                                        boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,0.15)' : '0 2px 8px rgba(0,0,0,0.05)',
+                                        border: `2px solid ${conflict ? '#e74c3c' : isDropTarget ? '#d4a373' : 'transparent'}`,
+                                        opacity: isDragging ? 0.6 : 1,
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        position: 'relative',
+                                        transform: isDragging ? 'scale(1.02) rotate(2deg)' : isDropTarget ? 'scale(1.01)' : 'scale(1)',
+                                    }}
+                                >
+                                    <div style={{
+                                        position: 'absolute',
+                                        left: '1rem',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        opacity: isDragging ? 0 : 0.3,
+                                        transition: 'opacity 0.2s'
+                                    }}>
+                                        <GripVertical size={20} color="#999" />
                                     </div>
 
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
-                                            <div style={{
-                                                background: getCategoryColor(event.category),
-                                                color: 'white',
-                                                padding: '0.5rem 1rem',
-                                                borderRadius: 8,
-                                                fontWeight: 600,
-                                                fontSize: '0.95rem',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '0.5rem'
-                                            }}>
-                                                <Clock size={16} />
-                                                {event.time} - {endTime}
-                                                {event.duration && <span style={{ opacity: 0.8, fontSize: '0.85rem' }}>({event.duration} Min)</span>}
-                                            </div>
-                                            {conflict && (
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#e74c3c', fontSize: '0.85rem' }}>
-                                                    <AlertCircle size={16} />
-                                                    Zeitkonflikt!
+                                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', paddingLeft: '2rem' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                                                <div style={{
+                                                    background: getCategoryColor(event.category),
+                                                    color: 'white',
+                                                    padding: '0.5rem 1rem',
+                                                    borderRadius: 8,
+                                                    fontWeight: 600,
+                                                    fontSize: '0.95rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem',
+                                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                                }}>
+                                                    <Clock size={16} />
+                                                    {event.time} - {endTime}
+                                                    {event.duration && <span style={{ opacity: 0.8, fontSize: '0.85rem' }}>({event.duration} Min)</span>}
                                                 </div>
+                                                {conflict && (
+                                                    <div style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.5rem',
+                                                        color: '#e74c3c',
+                                                        fontSize: '0.85rem',
+                                                        background: '#ffe5e5',
+                                                        padding: '0.25rem 0.75rem',
+                                                        borderRadius: 6,
+                                                        fontWeight: 500
+                                                    }}>
+                                                        <AlertCircle size={16} />
+                                                        Zeitkonflikt!
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', fontWeight: 600 }}>{event.title}</h3>
+
+                                            {event.description && (
+                                                <p style={{ margin: '0 0 0.5rem 0', color: '#666', fontSize: '0.9rem' }}>{event.description}</p>
+                                            )}
+
+                                            {event.location && (
+                                                <p style={{ margin: 0, color: '#999', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                                    📍 {event.location}
+                                                </p>
                                             )}
                                         </div>
 
-                                        <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem' }}>{event.title}</h3>
-
-                                        {event.description && (
-                                            <p style={{ margin: '0 0 0.5rem 0', color: '#666', fontSize: '0.9rem' }}>{event.description}</p>
-                                        )}
-
-                                        {event.location && (
-                                            <p style={{ margin: 0, color: '#999', fontSize: '0.85rem' }}>📍 {event.location}</p>
-                                        )}
+                                        <div style={{ display: 'flex', gap: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); deleteEvent(event.id); }}
+                                                style={{
+                                                    border: 'none',
+                                                    background: '#ffe5e5',
+                                                    padding: '0.5rem',
+                                                    borderRadius: 6,
+                                                    cursor: 'pointer',
+                                                    color: '#e74c3c',
+                                                    transition: 'background 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.background = '#ffd5d5'}
+                                                onMouseLeave={(e) => e.currentTarget.style.background = '#ffe5e5'}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
                                     </div>
 
-                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        <button
-                                            onClick={() => openEditModal(event)}
-                                            style={{ border: 'none', background: '#f0f0f0', padding: '0.5rem', borderRadius: 6, cursor: 'pointer' }}
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => deleteEvent(event.id)}
-                                            style={{ border: 'none', background: '#ffe5e5', padding: '0.5rem', borderRadius: 6, cursor: 'pointer', color: '#e74c3c' }}
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
+                                    {isDragging && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            right: 0,
+                                            bottom: 0,
+                                            background: 'rgba(212, 163, 115, 0.1)',
+                                            borderRadius: 12,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '0.9rem',
+                                            color: '#d4a373',
+                                            fontWeight: 600,
+                                            pointerEvents: 'none'
+                                        }}>
+                                            Verschieben...
+                                        </div>
+                                    )}
                                 </div>
+
+                                {index === events.length - 1 && dragOverIndex === index + 1 && (
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: -4,
+                                        left: 0,
+                                        right: 0,
+                                        height: 4,
+                                        background: 'linear-gradient(90deg, #d4a373, #a9845b)',
+                                        borderRadius: 2,
+                                        zIndex: 10,
+                                        boxShadow: '0 0 10px rgba(212, 163, 115, 0.5)',
+                                        animation: 'pulse 1s ease-in-out infinite'
+                                    }} />
+                                )}
                             </div>
                         )
                     })}
@@ -379,7 +452,13 @@ export default function TimelinePage() {
                 </div>
             )}
 
-            {/* Modal */}
+            <style jsx>{`
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                }
+            `}</style>
+
             {showModal && (
                 <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }} onClick={() => setShowModal(false)}>
                     <div style={{ background: 'white', padding: '2rem', borderRadius: 16, width: '100%', maxWidth: 500, maxHeight: '90vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>

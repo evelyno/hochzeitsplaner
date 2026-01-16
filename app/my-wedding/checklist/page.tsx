@@ -11,6 +11,7 @@ interface Task {
     isCompleted: boolean
     category: string
     order: number
+    dueDate: string | null
 }
 
 interface GroupedTasks {
@@ -151,6 +152,28 @@ export default function ChecklistPage() {
     }
 
     // Group tasks by category
+    const getRelativeDate = (dueDate: string | null) => {
+        if (!dueDate) return null
+
+        const due = new Date(dueDate)
+        const now = new Date()
+        const diffTime = due.getTime() - now.getTime()
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+        if (diffDays < 0) return { text: `Überfällig (${Math.abs(diffDays)} Tage)`, color: '#e74c3c', urgent: true }
+        if (diffDays === 0) return { text: 'Heute fällig', color: '#f39c12', urgent: true }
+        if (diffDays === 1) return { text: 'Morgen fällig', color: '#f39c12', urgent: true }
+        if (diffDays <= 7) return { text: `In ${diffDays} Tagen`, color: '#f39c12', urgent: false }
+        if (diffDays <= 14) return { text: `In ${diffDays} Tagen`, color: '#3498db', urgent: false }
+        if (diffDays <= 30) return { text: `In ${diffDays} Tagen`, color: '#95a5a6', urgent: false }
+
+        const weeks = Math.floor(diffDays / 7)
+        if (weeks <= 8) return { text: `In ${weeks} Wochen`, color: '#95a5a6', urgent: false }
+
+        const months = Math.floor(diffDays / 30)
+        return { text: `In ${months} Monaten`, color: '#95a5a6', urgent: false }
+    }
+
     const groupedTasks: GroupedTasks = tasks.reduce((acc, task) => {
         if (!acc[task.category]) {
             acc[task.category] = []
@@ -264,9 +287,26 @@ export default function ChecklistPage() {
                                                         style={{ flex: 1, padding: '0.5rem', border: '1px solid #d4a373', borderRadius: 4, outline: 'none' }}
                                                     />
                                                 ) : (
-                                                    <span style={{ flex: 1, textDecoration: task.isCompleted ? 'line-through' : 'none', color: task.isCompleted ? '#999' : '#333' }}>
-                                                        {task.description}
-                                                    </span>
+                                                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                                        <span style={{ textDecoration: task.isCompleted ? 'line-through' : 'none', color: task.isCompleted ? '#999' : '#333' }}>
+                                                            {task.description}
+                                                        </span>
+                                                        {task.dueDate && (() => {
+                                                            const dateInfo = getRelativeDate(task.dueDate)
+                                                            return dateInfo && (
+                                                                <span style={{
+                                                                    fontSize: '0.75rem',
+                                                                    padding: '0.25rem 0.5rem',
+                                                                    background: dateInfo.urgent ? dateInfo.color + '20' : '#f0f0f0',
+                                                                    color: dateInfo.color,
+                                                                    borderRadius: 4,
+                                                                    fontWeight: dateInfo.urgent ? 600 : 400
+                                                                }}>
+                                                                    {dateInfo.text}
+                                                                </span>
+                                                            )
+                                                        })()}
+                                                    </div>
                                                 )}
                                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                     <button onClick={() => setEditingTask(task)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#666', padding: '0.25rem' }}><Edit2 size={16} /></button>

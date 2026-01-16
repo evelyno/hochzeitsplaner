@@ -99,7 +99,7 @@ export async function POST(req: Request) {
 
             // Create default checklist items with calculated due dates
             const weddingDate = new Date(eventDate)
-            const taskPromises = DEFAULT_CHECKLIST_ITEMS.map((item) => {
+            const taskPromises = defaultChecklistItems.map((item: any) => {
                 const dueDate = new Date(weddingDate)
                 dueDate.setDate(dueDate.getDate() - item.daysBeforeWedding)
 

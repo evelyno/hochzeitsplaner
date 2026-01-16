@@ -27,6 +27,7 @@ export default function ChecklistPage() {
     const [newTaskDescription, setNewTaskDescription] = useState('')
     const [newTaskCategory, setNewTaskCategory] = useState('GENERAL')
     const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
+    const [weddingDate, setWeddingDate] = useState<Date | null>(null)
 
     useEffect(() => {
         fetchUserEvent()
@@ -38,6 +39,7 @@ export default function ChecklistPage() {
             if (res.ok) {
                 const event = await res.json()
                 setEventId(event.id)
+                setWeddingDate(new Date(event.date))
                 fetchTasks(event.id)
             } else {
                 setIsLoading(false)
@@ -151,6 +153,52 @@ export default function ChecklistPage() {
         setCollapsedCategories(newCollapsed)
     }
 
+    // Generate dynamic category label with date range
+    const getDynamicCategoryLabel = (category: string): string => {
+        const baseLabel = CATEGORY_LABELS[category] || category
+
+        if (!weddingDate) return baseLabel
+
+        const wedding = new Date(weddingDate)
+
+        // Calculate date ranges based on category
+        const ranges: Record<string, { monthsBefore: number, monthsRange: number }> = {
+            '12_MONTHS': { monthsBefore: 12, monthsRange: 0 },
+            '9_MONTHS': { monthsBefore: 12, monthsRange: 3 },
+            '6_MONTHS': { monthsBefore: 9, monthsRange: 3 },
+            '4_MONTHS': { monthsBefore: 6, monthsRange: 2 },
+            '2_MONTHS': { monthsBefore: 4, monthsRange: 2 },
+            '1_MONTH': { monthsBefore: 2, monthsRange: 1 },
+            '2_WEEKS': { monthsBefore: 1, monthsRange: 0.5 },
+            '1_WEEK': { monthsBefore: 0.25, monthsRange: 0 },
+            'DAY_BEFORE': { monthsBefore: 0, monthsRange: 0 },
+        }
+
+        const range = ranges[category]
+        if (!range) return baseLabel
+
+        // Calculate start date (months before wedding)
+        const startDate = new Date(wedding)
+        startDate.setMonth(startDate.getMonth() - range.monthsBefore)
+
+        // Calculate end date
+        const endDate = new Date(startDate)
+        if (range.monthsRange > 0) {
+            endDate.setMonth(endDate.getMonth() + range.monthsRange)
+        } else if (category === '1_WEEK') {
+            endDate.setDate(endDate.getDate() + 7)
+        } else if (category === 'DAY_BEFORE') {
+            return `${baseLabel} (${startDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })})`
+        } else {
+            return baseLabel
+        }
+
+        const startStr = startDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        const endStr = endDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+        return `${baseLabel} (${startStr} - ${endStr})`
+    }
+
     // Group tasks by category
     const getRelativeDate = (dueDate: string | null) => {
         if (!dueDate) return null
@@ -250,13 +298,21 @@ export default function ChecklistPage() {
                                 {/* Category Header */}
                                 <div
                                     onClick={() => toggleCategory(category)}
-                                    style={{ padding: '1.5rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fafafa', borderBottom: isCollapsed ? 'none' : '1px solid #eee' }}
+                                    style={{
+                                        padding: '1.5rem',
+                                        background: 'linear-gradient(135deg, #d4a373 0%, #a9845b 100%)',
+                                        color: 'white',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
                                 >
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                         <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>
-                                            {CATEGORY_LABELS[category] || category}
+                                            {getDynamicCategoryLabel(category)}
                                         </h3>
-                                        <div style={{ fontSize: '0.85rem', color: '#999' }}>
+                                        <div style={{ fontSize: '0.85rem', color: 'white', opacity: 0.8 }}>
                                             {categoryCompleted} / {categoryTotal} ({categoryProgress}%)
                                         </div>
                                     </div>

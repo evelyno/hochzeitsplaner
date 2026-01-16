@@ -2,21 +2,30 @@
 
 import { useState, useEffect } from 'react'
 import styles from '../client-dashboard.module.css'
-import { Plus, Check, Trash2, Edit2, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, X, Check, ChevronDown, ChevronUp } from 'lucide-react'
+import { CATEGORY_LABELS } from '@/lib/default-checklist'
 
 interface Task {
     id: string
     description: string
     isCompleted: boolean
+    category: string
+    order: number
+}
+
+interface GroupedTasks {
+    [category: string]: Task[]
 }
 
 export default function ChecklistPage() {
     const [tasks, setTasks] = useState<Task[]>([])
     const [isLoading, setIsLoading] = useState(true)
-    const [newTask, setNewTask] = useState('')
-    const [editingId, setEditingId] = useState<string | null>(null)
-    const [editText, setEditText] = useState('')
+    const [showModal, setShowModal] = useState(false)
+    const [editingTask, setEditingTask] = useState<Task | null>(null)
     const [eventId, setEventId] = useState<string | null>(null)
+    const [newTaskDescription, setNewTaskDescription] = useState('')
+    const [newTaskCategory, setNewTaskCategory] = useState('GENERAL')
+    const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set())
 
     useEffect(() => {
         fetchUserEvent()
@@ -42,8 +51,7 @@ export default function ChecklistPage() {
         try {
             const res = await fetch(`/api/tasks?eventId=${evtId}`)
             if (res.ok) {
-                const data = await res.json()
-                setTasks(data)
+                setTasks(await res.json())
             }
         } catch (error) {
             console.error('Failed to fetch tasks:', error)
@@ -53,263 +61,266 @@ export default function ChecklistPage() {
     }
 
     const addTask = async () => {
-        if (!newTask.trim() || !eventId) return
+        if (!eventId || !newTaskDescription.trim()) return
 
         try {
             const res = await fetch('/api/tasks', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ eventId, description: newTask })
+                body: JSON.stringify({
+                    eventId,
+                    description: newTaskDescription,
+                    category: newTaskCategory
+                })
             })
 
             if (res.ok) {
-                const task = await res.json()
-                setTasks([...tasks, task])
-                setNewTask('')
+                fetchTasks(eventId)
+                setNewTaskDescription('')
+                setNewTaskCategory('GENERAL')
+                setShowModal(false)
             }
         } catch (error) {
             console.error('Failed to add task:', error)
         }
     }
 
-    const toggleTask = async (id: string, isCompleted: boolean) => {
+    const toggleTask = async (task: Task) => {
         try {
             const res = await fetch('/api/tasks', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, isCompleted: !isCompleted })
+                body: JSON.stringify({
+                    id: task.id,
+                    isCompleted: !task.isCompleted
+                })
             })
 
-            if (res.ok) {
-                setTasks(tasks.map(t => t.id === id ? { ...t, isCompleted: !isCompleted } : t))
+            if (res.ok && eventId) {
+                fetchTasks(eventId)
             }
         } catch (error) {
             console.error('Failed to toggle task:', error)
         }
     }
 
-    const deleteTask = async (id: string) => {
-        try {
-            const res = await fetch(`/api/tasks?id=${id}`, {
-                method: 'DELETE'
-            })
-
-            if (res.ok) {
-                setTasks(tasks.filter(t => t.id !== id))
-            }
-        } catch (error) {
-            console.error('Failed to delete task:', error)
-        }
-    }
-
-    const startEdit = (task: Task) => {
-        setEditingId(task.id)
-        setEditText(task.description)
-    }
-
-    const saveEdit = async (id: string) => {
-        if (!editText.trim()) return
-
+    const updateTask = async (task: Task, newDescription: string) => {
         try {
             const res = await fetch('/api/tasks', {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, description: editText })
+                body: JSON.stringify({
+                    id: task.id,
+                    description: newDescription
+                })
             })
 
-            if (res.ok) {
-                setTasks(tasks.map(t => t.id === id ? { ...t, description: editText } : t))
-                setEditingId(null)
-                setEditText('')
+            if (res.ok && eventId) {
+                fetchTasks(eventId)
+                setEditingTask(null)
             }
         } catch (error) {
             console.error('Failed to update task:', error)
         }
     }
 
-    const cancelEdit = () => {
-        setEditingId(null)
-        setEditText('')
+    const deleteTask = async (taskId: string) => {
+        if (!confirm('Möchten Sie diese Aufgabe wirklich löschen?')) return
+
+        try {
+            const res = await fetch(`/api/tasks?id=${taskId}`, {
+                method: 'DELETE'
+            })
+
+            if (res.ok && eventId) {
+                fetchTasks(eventId)
+            }
+        } catch (error) {
+            console.error('Failed to delete task:', error)
+        }
     }
 
+    const toggleCategory = (category: string) => {
+        const newCollapsed = new Set(collapsedCategories)
+        if (newCollapsed.has(category)) {
+            newCollapsed.delete(category)
+        } else {
+            newCollapsed.add(category)
+        }
+        setCollapsedCategories(newCollapsed)
+    }
+
+    // Group tasks by category
+    const groupedTasks: GroupedTasks = tasks.reduce((acc, task) => {
+        if (!acc[task.category]) {
+            acc[task.category] = []
+        }
+        acc[task.category].push(task)
+        return acc
+    }, {} as GroupedTasks)
+
+    // Sort tasks within each category by order
+    Object.keys(groupedTasks).forEach(category => {
+        groupedTasks[category].sort((a, b) => a.order - b.order)
+    })
+
+    // Calculate progress
     const completedCount = tasks.filter(t => t.isCompleted).length
-    const progress = tasks.length > 0 ? (completedCount / tasks.length) * 100 : 0
+    const totalCount = tasks.length
+    const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+
+    // Category order
+    const categoryOrder = [
+        "12_10_MONTHS", "9_7_MONTHS", "6_5_MONTHS", "4_3_MONTHS",
+        "2_MONTHS", "4_2_WEEKS", "1_WEEK", "1_DAY",
+        "WEDDING_DAY", "AFTER_WEDDING", "GENERAL"
+    ]
 
     return (
         <div>
-            <div style={{ marginBottom: '2rem' }}>
-                <h1 style={{ fontSize: '2rem', fontWeight: 300, marginBottom: '0.5rem' }}>Checkliste</h1>
-                <p style={{ color: '#666' }}>Behalten Sie den Überblick über alle Aufgaben</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <div>
+                    <h1 style={{ fontSize: '2rem', fontWeight: 300, marginBottom: '0.5rem' }}>Checkliste</h1>
+                    <p style={{ color: '#666' }}>Behalten Sie den Überblick über alle Aufgaben</p>
+                </div>
+                <button
+                    onClick={() => setShowModal(true)}
+                    style={{ background: '#d4a373', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}
+                >
+                    <Plus size={18} /> Neue Aufgabe
+                </button>
             </div>
 
             {/* Progress */}
-            <div className={styles.card} style={{ padding: '1.5rem', marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div className={styles.card} style={{ marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                     <div>
-                        <div style={{ fontSize: '0.85rem', color: '#666', marginBottom: '0.25rem' }}>Fortschritt</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{completedCount} von {tasks.length} erledigt</div>
+                        <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>Fortschritt</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 600 }}>{progress}%</div>
                     </div>
-                    <div style={{ fontSize: '2rem', fontWeight: 700, color: '#d4a373' }}>{progress.toFixed(0)}%</div>
+                    <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.25rem' }}>Erledigt</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 600 }}>{completedCount} / {totalCount}</div>
+                    </div>
                 </div>
-                <div style={{ width: '100%', height: 8, background: '#eee', borderRadius: 4, overflow: 'hidden' }}>
-                    <div style={{
-                        width: `${progress}%`,
-                        height: '100%',
-                        background: 'linear-gradient(90deg, #d4a373, #c89563)',
-                        transition: 'width 0.3s'
-                    }}></div>
+                <div style={{ width: '100%', height: 8, background: '#f0f0f0', borderRadius: 4, overflow: 'hidden' }}>
+                    <div style={{ width: `${progress}%`, height: '100%', background: 'linear-gradient(90deg, #d4a373, #a9845b)', transition: 'width 0.3s' }}></div>
                 </div>
             </div>
 
-            {/* Add New Task */}
-            <div className={styles.card} style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', gap: '1rem' }}>
-                    <input
-                        type="text"
-                        placeholder="Neue Aufgabe hinzufügen..."
-                        value={newTask}
-                        onChange={(e) => setNewTask(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && addTask()}
-                        style={{
-                            flex: 1,
-                            padding: '0.75rem 1rem',
-                            border: '1px solid #eee',
-                            borderRadius: 8,
-                            fontSize: '0.95rem',
-                            outline: 'none'
-                        }}
-                    />
-                    <button
-                        onClick={addTask}
-                        style={{
-                            background: '#d4a373',
-                            color: 'white',
-                            border: 'none',
-                            padding: '0.75rem 1.5rem',
-                            borderRadius: 8,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            fontWeight: 500
-                        }}
-                    >
-                        <Plus size={18} /> Hinzufügen
-                    </button>
-                </div>
-            </div>
+            {/* Categorized Tasks */}
+            {isLoading ? (
+                <div style={{ padding: '3rem', textAlign: 'center', color: '#999' }}>Lädt...</div>
+            ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {categoryOrder.map(category => {
+                        const categoryTasks = groupedTasks[category] || []
+                        if (categoryTasks.length === 0) return null
 
-            {/* Tasks List */}
-            <div className={styles.card} style={{ padding: 0, overflow: 'hidden' }}>
-                {isLoading ? (
-                    <div style={{ padding: '3rem', textAlign: 'center', color: '#999' }}>Lädt...</div>
-                ) : tasks.length === 0 ? (
-                    <div style={{ padding: '3rem', textAlign: 'center', color: '#999' }}>
-                        Noch keine Aufgaben. Fügen Sie Ihre erste Aufgabe hinzu!
-                    </div>
-                ) : (
-                    <div>
-                        {tasks.map((task) => (
-                            <div
-                                key={task.id}
-                                style={{
-                                    padding: '1rem 1.5rem',
-                                    borderBottom: '1px solid #f5f5f5',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '1rem',
-                                    background: task.isCompleted ? '#f9f9f9' : 'white',
-                                    transition: 'background 0.2s'
-                                }}
-                            >
-                                {/* Checkbox */}
-                                <button
-                                    onClick={() => toggleTask(task.id, task.isCompleted)}
-                                    style={{
-                                        width: 24,
-                                        height: 24,
-                                        borderRadius: 6,
-                                        border: task.isCompleted ? 'none' : '2px solid #ddd',
-                                        background: task.isCompleted ? '#4caf50' : 'white',
-                                        cursor: 'pointer',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        flexShrink: 0
-                                    }}
+                        const isCollapsed = collapsedCategories.has(category)
+                        const categoryCompleted = categoryTasks.filter(t => t.isCompleted).length
+                        const categoryTotal = categoryTasks.length
+                        const categoryProgress = Math.round((categoryCompleted / categoryTotal) * 100)
+
+                        return (
+                            <div key={category} className={styles.card} style={{ padding: 0, overflow: 'hidden' }}>
+                                {/* Category Header */}
+                                <div
+                                    onClick={() => toggleCategory(category)}
+                                    style={{ padding: '1.5rem', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fafafa', borderBottom: isCollapsed ? 'none' : '1px solid #eee' }}
                                 >
-                                    {task.isCompleted && <Check size={16} color="white" />}
-                                </button>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                        <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600 }}>
+                                            {CATEGORY_LABELS[category] || category}
+                                        </h3>
+                                        <div style={{ fontSize: '0.85rem', color: '#999' }}>
+                                            {categoryCompleted} / {categoryTotal} ({categoryProgress}%)
+                                        </div>
+                                    </div>
+                                    {isCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+                                </div>
 
-                                {/* Task Text */}
-                                {editingId === task.id ? (
-                                    <input
-                                        type="text"
-                                        value={editText}
-                                        onChange={(e) => setEditText(e.target.value)}
-                                        onKeyPress={(e) => e.key === 'Enter' && saveEdit(task.id)}
-                                        style={{
-                                            flex: 1,
-                                            padding: '0.5rem',
-                                            border: '1px solid #d4a373',
-                                            borderRadius: 4,
-                                            fontSize: '0.95rem',
-                                            outline: 'none'
-                                        }}
-                                        autoFocus
-                                    />
-                                ) : (
-                                    <div
-                                        style={{
-                                            flex: 1,
-                                            fontSize: '0.95rem',
-                                            textDecoration: task.isCompleted ? 'line-through' : 'none',
-                                            color: task.isCompleted ? '#999' : '#333'
-                                        }}
-                                    >
-                                        {task.description}
+                                {/* Category Tasks */}
+                                {!isCollapsed && (
+                                    <div style={{ padding: '1rem' }}>
+                                        {categoryTasks.map((task, index) => (
+                                            <div key={task.id} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', borderBottom: index < categoryTasks.length - 1 ? '1px solid #f5f5f5' : 'none' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={task.isCompleted}
+                                                    onChange={() => toggleTask(task)}
+                                                    style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#d4a373' }}
+                                                />
+                                                {editingTask?.id === task.id ? (
+                                                    <input
+                                                        autoFocus
+                                                        value={editingTask.description}
+                                                        onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
+                                                        onBlur={() => updateTask(task, editingTask.description)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') updateTask(task, editingTask.description)
+                                                            if (e.key === 'Escape') setEditingTask(null)
+                                                        }}
+                                                        style={{ flex: 1, padding: '0.5rem', border: '1px solid #d4a373', borderRadius: 4, outline: 'none' }}
+                                                    />
+                                                ) : (
+                                                    <span style={{ flex: 1, textDecoration: task.isCompleted ? 'line-through' : 'none', color: task.isCompleted ? '#999' : '#333' }}>
+                                                        {task.description}
+                                                    </span>
+                                                )}
+                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                    <button onClick={() => setEditingTask(task)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#666', padding: '0.25rem' }}><Edit2 size={16} /></button>
+                                                    <button onClick={() => deleteTask(task.id)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#f44336', padding: '0.25rem' }}><Trash2 size={16} /></button>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
-
-                                {/* Actions */}
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    {editingId === task.id ? (
-                                        <>
-                                            <button
-                                                onClick={() => saveEdit(task.id)}
-                                                style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#4caf50', padding: '0.25rem' }}
-                                            >
-                                                <Check size={18} />
-                                            </button>
-                                            <button
-                                                onClick={cancelEdit}
-                                                style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#999', padding: '0.25rem' }}
-                                            >
-                                                <X size={18} />
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <button
-                                                onClick={() => startEdit(task)}
-                                                style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#666', padding: '0.25rem' }}
-                                            >
-                                                <Edit2 size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => deleteTask(task.id)}
-                                                style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#f44336', padding: '0.25rem' }}
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
                             </div>
-                        ))}
+                        )
+                    })}
+                </div>
+            )}
+
+            {/* Add Task Modal */}
+            {showModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div style={{ background: 'white', borderRadius: 12, padding: '2rem', maxWidth: 500, width: '90%' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0 }}>Neue Aufgabe</h2>
+                            <button onClick={() => setShowModal(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}><X size={24} /></button>
+                        </div>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Beschreibung</label>
+                            <input
+                                autoFocus
+                                type="text"
+                                value={newTaskDescription}
+                                onChange={(e) => setNewTaskDescription(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && addTask()}
+                                placeholder="z.B. Fotograf buchen"
+                                style={{ width: '100%', padding: '0.75rem', border: '1px solid #eee', borderRadius: 8, outline: 'none' }}
+                            />
+                        </div>
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Kategorie</label>
+                            <select
+                                value={newTaskCategory}
+                                onChange={(e) => setNewTaskCategory(e.target.value)}
+                                style={{ width: '100%', padding: '0.75rem', border: '1px solid #eee', borderRadius: 8, outline: 'none' }}
+                            >
+                                {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+                                    <option key={key} value={key}>{label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button onClick={() => setShowModal(false)} style={{ flex: 1, background: '#f5f6fa', border: '1px solid #eee', padding: '0.75rem', borderRadius: 8, cursor: 'pointer' }}>Abbrechen</button>
+                            <button onClick={addTask} style={{ flex: 1, background: '#d4a373', color: 'white', border: 'none', padding: '0.75rem', borderRadius: 8, cursor: 'pointer' }}>Hinzufügen</button>
+                        </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     )
 }

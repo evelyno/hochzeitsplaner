@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { prisma } from "@/lib/prisma"
 import { authOptions } from "../auth/[...nextauth]/route"
+import { DEFAULT_CHECKLIST_ITEMS } from "@/lib/default-checklist"
 
 // GET - Fetch events for a venue
 export async function GET(req: Request) {
@@ -93,6 +94,17 @@ export async function POST(req: Request) {
                         }
                     }
                 }
+            })
+
+            // Create default checklist items
+            await tx.task.createMany({
+                data: DEFAULT_CHECKLIST_ITEMS.map(item => ({
+                    eventId: event.id,
+                    description: item.description,
+                    category: item.category,
+                    order: item.order,
+                    isCompleted: false
+                }))
             })
 
             return { event, password }

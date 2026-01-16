@@ -20,7 +20,11 @@ export async function GET(req: Request) {
 
         const tasks = await prisma.task.findMany({
             where: { eventId },
-            orderBy: { createdAt: 'asc' }
+            orderBy: [
+                { category: 'asc' },
+                { order: 'asc' },
+                { createdAt: 'asc' }
+            ]
         })
 
         return NextResponse.json(tasks)
@@ -39,16 +43,24 @@ export async function POST(req: Request) {
         }
 
         const body = await req.json()
-        const { eventId, description } = body
+        const { eventId, description, category } = body
 
         if (!eventId || !description) {
             return new NextResponse("Missing required fields", { status: 400 })
         }
 
+        // Get the highest order in the category
+        const lastTask = await prisma.task.findFirst({
+            where: { eventId, category: category || 'GENERAL' },
+            orderBy: { order: 'desc' }
+        })
+
         const task = await prisma.task.create({
             data: {
                 eventId,
                 description,
+                category: category || 'GENERAL',
+                order: (lastTask?.order || 0) + 1,
                 isCompleted: false
             }
         })

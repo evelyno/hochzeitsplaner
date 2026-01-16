@@ -32,6 +32,7 @@ export default function SeatingPage() {
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
     const [showEditModal, setShowEditModal] = useState(false)
     const [editFormData, setEditFormData] = useState({ name: '', capacity: 8, shape: 'ROUND' })
+    const [draggedGuest, setDraggedGuest] = useState<Guest | null>(null)
     const canvasRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -100,13 +101,15 @@ export default function SeatingPage() {
     }
 
     const handleMouseDown = (e: React.MouseEvent, tableId: string) => {
+        e.stopPropagation()
         const table = tables.find(t => t.id === tableId)
-        if (!table) return
+        if (!table || !canvasRef.current) return
 
+        const rect = canvasRef.current.getBoundingClientRect()
         setDraggingTable(tableId)
         setDragOffset({
-            x: e.clientX - table.x,
-            y: e.clientY - table.y
+            x: e.clientX - rect.left - table.x,
+            y: e.clientY - rect.top - table.y
         })
     }
 
@@ -194,6 +197,20 @@ export default function SeatingPage() {
         }
     }
 
+    const handleSeatDrop = (e: React.DragEvent, tableId: string, seatNumber: number) => {
+        e.preventDefault()
+        e.stopPropagation()
+
+        if (draggedGuest) {
+            assignGuestToSeat(draggedGuest.id, tableId, seatNumber)
+            setDraggedGuest(null)
+        }
+    }
+
+    const handleSeatDragOver = (e: React.DragEvent) => {
+        e.preventDefault()
+    }
+
     const renderSeats = (table: Table) => {
         const seats = []
         const radius = table.shape === 'ROUND' ? 60 : 70
@@ -209,6 +226,8 @@ export default function SeatingPage() {
             seats.push(
                 <div
                     key={`${table.id}-seat-${i}`}
+                    onDrop={(e) => handleSeatDrop(e, table.id, i + 1)}
+                    onDragOver={handleSeatDragOver}
                     style={{
                         position: 'absolute',
                         left: seatX,
@@ -225,7 +244,8 @@ export default function SeatingPage() {
                         fontWeight: 600,
                         color: assignedGuest ? 'white' : '#666',
                         cursor: 'pointer',
-                        zIndex: 10
+                        zIndex: 10,
+                        transition: 'all 0.2s'
                     }}
                     onClick={(e) => {
                         e.stopPropagation()
@@ -233,8 +253,6 @@ export default function SeatingPage() {
                             if (confirm(`${assignedGuest.name} entfernen?`)) {
                                 unassignGuest(assignedGuest.id)
                             }
-                        } else {
-                            setSelectedTable(table)
                         }
                     }}
                     title={assignedGuest ? assignedGuest.name : `Platz ${i + 1}`}
@@ -273,7 +291,10 @@ export default function SeatingPage() {
                         <React.Fragment key={table.id}>
                             <div
                                 onMouseDown={(e) => handleMouseDown(e, table.id)}
-                                onClick={() => setSelectedTable(table)}
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedTable(table)
+                                }}
                                 style={{
                                     position: 'absolute',
                                     left: table.x,
@@ -286,7 +307,7 @@ export default function SeatingPage() {
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    cursor: 'grab',
+                                    cursor: draggingTable === table.id ? 'grabbing' : 'grab',
                                     boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                     color: selectedTable?.id === table.id ? 'white' : '#333',
                                     userSelect: 'none',
@@ -343,15 +364,29 @@ export default function SeatingPage() {
                         <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <UsersIcon size={20} /> Nicht zugewiesen ({unassignedGuests.length})
                         </h3>
+                        <p style={{ fontSize: '0.85rem', opacity: 0.7, marginBottom: '1rem' }}>Ziehen Sie Gäste auf freie Plätze</p>
                         <div style={{ maxHeight: 400, overflowY: 'auto' }}>
                             {unassignedGuests.map(guest => (
                                 <div
                                     key={guest.id}
                                     draggable
                                     onDragStart={(e) => {
-                                        e.dataTransfer.setData('guestId', guest.id)
+                                        setDraggedGuest(guest)
+                                        e.dataTransfer.effectAllowed = 'move'
                                     }}
-                                    style={{ padding: '0.75rem', background: '#f9f9f9', borderRadius: 8, marginBottom: '0.5rem', cursor: 'grab', fontSize: '0.9rem' }}
+                                    onDragEnd={() => setDraggedGuest(null)}
+                                    style={{
+                                        padding: '0.75rem',
+                                        background: '#f9f9f9',
+                                        borderRadius: 8,
+                                        marginBottom: '0.5rem',
+                                        cursor: 'grab',
+                                        fontSize: '0.9rem',
+                                        border: '2px dashed transparent',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.borderColor = '#d4a373'}
+                                    onMouseLeave={(e) => e.currentTarget.style.borderColor = 'transparent'}
                                 >
                                     {guest.name}
                                 </div>

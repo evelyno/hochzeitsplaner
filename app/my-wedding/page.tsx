@@ -76,8 +76,17 @@ export default function ClientDashboard() {
 
             const taskStats = {
                 total: tasks.length,
-                completed: tasks.filter((t: any) => t.completed).length,
-                upcoming: tasks.filter((t: any) => !t.completed).slice(0, 5)
+                completed: tasks.filter((t: any) => t.isCompleted).length,
+                upcoming: tasks
+                    .filter((t: any) => !t.isCompleted)
+                    .sort((a: any, b: any) => {
+                        // Sort by due date if available
+                        if (a.dueDate && b.dueDate) {
+                            return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+                        }
+                        return 0
+                    })
+                    .slice(0, 5)
             }
 
             const budgetStats = budgetData ? {
@@ -240,8 +249,37 @@ export default function ClientDashboard() {
                                 <div key={task.id} style={{ padding: '1rem', background: '#f9f9f9', borderRadius: 12, display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                     <div style={{ width: 20, height: 20, borderRadius: 4, border: '2px solid #d4a373', flexShrink: 0 }} />
                                     <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>{task.title}</div>
-                                        {task.category && <div style={{ fontSize: '0.85rem', color: '#666', textTransform: 'capitalize' }}>{task.category}</div>}
+                                        <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>{task.description}</div>
+                                        {task.dueDate && (() => {
+                                            const due = new Date(task.dueDate)
+                                            const now = new Date()
+                                            const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                                            let dateText = ''
+                                            let dateColor = '#666'
+
+                                            if (diffDays < 0) {
+                                                dateText = `Überfällig (${Math.abs(diffDays)} Tage)`
+                                                dateColor = '#e74c3c'
+                                            } else if (diffDays === 0) {
+                                                dateText = 'Heute fällig'
+                                                dateColor = '#f39c12'
+                                            } else if (diffDays === 1) {
+                                                dateText = 'Morgen fällig'
+                                                dateColor = '#f39c12'
+                                            } else if (diffDays <= 7) {
+                                                dateText = `In ${diffDays} Tagen`
+                                                dateColor = '#f39c12'
+                                            } else if (diffDays <= 14) {
+                                                dateText = `In ${diffDays} Tagen`
+                                                dateColor = '#3498db'
+                                            } else {
+                                                const weeks = Math.floor(diffDays / 7)
+                                                dateText = `In ${weeks} Wochen`
+                                                dateColor = '#95a5a6'
+                                            }
+
+                                            return <div style={{ fontSize: '0.85rem', color: dateColor }}>{dateText}</div>
+                                        })()}
                                     </div>
                                 </div>
                             ))}

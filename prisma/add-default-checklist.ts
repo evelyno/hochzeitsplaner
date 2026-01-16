@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { DEFAULT_CHECKLIST_ITEMS } from '../lib/default-checklist'
+import { defaultChecklistItems } from '../lib/default-checklist'
 
 const prisma = new PrismaClient()
 

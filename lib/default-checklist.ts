@@ -67,3 +67,19 @@ export const defaultChecklistItems = [
     { title: 'Brautkleid reinigen lassen', category: 'AFTER', order: 2, daysBeforeWedding: -7 },
     { title: 'Namensänderung (falls gewünscht)', category: 'AFTER', order: 3, daysBeforeWedding: -30 },
 ]
+
+// Category labels for display
+export const CATEGORY_LABELS: Record<string, string> = {
+    '12_MONTHS': '12+ Monate vorher',
+    '9_MONTHS': '9-12 Monate vorher',
+    '6_MONTHS': '6-9 Monate vorher',
+    '4_MONTHS': '4-6 Monate vorher',
+    '2_MONTHS': '2-4 Monate vorher',
+    '1_MONTH': '1-2 Monate vorher',
+    '2_WEEKS': '2-4 Wochen vorher',
+    '1_WEEK': '1 Woche vorher',
+    'DAY_BEFORE': 'Tag vorher',
+    'AFTER': 'Nach der Hochzeit',
+    'GENERAL': 'Allgemein'
+}
+

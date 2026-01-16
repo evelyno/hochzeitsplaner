@@ -1,4 +1,4 @@
-/* Inherit some base styles but override specific client needs */
+/* Client Dashboard Layout */
 .layout {
     display: flex;
     min-height: 100vh;
@@ -6,62 +6,74 @@
 }
 
 .sidebar {
-    width: 80px;
-    /* Slim sidebar for clients */
+    width: 260px;
     background-color: white;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 2rem 0;
+    padding: 0;
     border-right: 1px solid #eee;
     position: fixed;
     height: 100vh;
     z-index: 10;
+    overflow-y: auto;
 }
 
-.brand {
-    margin-bottom: 3rem;
-    color: #d4a373;
+.sidebarHeader {
+    padding: 2rem 1.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.sidebarHeader h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.nav {
+    flex: 1;
+    padding: 1rem 0;
 }
 
 .navItem {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-    color: #999;
+    gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
+    color: #666;
     text-decoration: none;
-    margin-bottom: 1.5rem;
     transition: all 0.2s;
+    border-left: 3px solid transparent;
 }
 
-.navItem:hover,
-.activeNavItem {
-    background-color: #fff5eb;
+.navItem:hover {
+    background-color: #f9f9f9;
     color: #d4a373;
 }
 
-.mainContent {
+.navItemActive {
+    background-color: #fff5eb;
+    color: #d4a373;
+    border-left-color: #d4a373;
+    font-weight: 500;
+}
+
+.navItem span {
+    font-size: 0.95rem;
+}
+
+.main {
     flex: 1;
-    margin-left: 80px;
-    display: flex;
-    flex-direction: column;
-}
-
-.header {
-    height: 80px;
-    padding: 0 3rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.pageContent {
+    margin-left: 260px;
     padding: 2rem 3rem;
-    flex: 1;
+    min-height: 100vh;
+}
+
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
 .heroCard {
@@ -105,9 +117,62 @@
     gap: 2rem;
 }
 
-.card {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid #eee;
+    }
+
+    .main {
+        margin-left: 0;
+        padding: 1.5rem;
+    }
+
+    .layout {
+        flex-direction: column;
+    }
+
+    .heroCard {
+        padding: 2rem;
+    }
+
+    .countdown {
+        gap: 1rem;
+    }
+
+    .countdownValue {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .main {
+        padding: 1rem;
+    }
+
+    .card {
+        padding: 1.5rem;
+    }
+
+    .heroCard {
+        padding: 1.5rem;
+    }
+
+    .countdown {
+        flex-wrap: wrap;
+    }
+
+    .countdownValue {
+        font-size: 1.75rem;
+    }
 }

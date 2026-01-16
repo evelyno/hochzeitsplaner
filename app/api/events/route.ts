@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { prisma } from "@/lib/prisma"
 import { authOptions } from "../auth/[...nextauth]/route"
-import { DEFAULT_CHECKLIST_ITEMS } from "@/lib/default-checklist"
+import { defaultChecklistItems } from "@/lib/default-checklist"
 
 // GET - Fetch events for a venue
 export async function GET(req: Request) {
@@ -96,16 +96,26 @@ export async function POST(req: Request) {
                 }
             })
 
-            // Create default checklist items
-            await tx.task.createMany({
-                data: DEFAULT_CHECKLIST_ITEMS.map(item => ({
-                    eventId: event.id,
-                    description: item.description,
-                    category: item.category,
-                    order: item.order,
-                    isCompleted: false
-                }))
+
+            // Create default checklist items with calculated due dates
+            const weddingDate = new Date(eventDate)
+            const taskPromises = DEFAULT_CHECKLIST_ITEMS.map((item) => {
+                const dueDate = new Date(weddingDate)
+                dueDate.setDate(dueDate.getDate() - item.daysBeforeWedding)
+
+                return tx.task.create({
+                    data: {
+                        description: item.title,
+                        category: item.category,
+                        order: item.order,
+                        dueDate: dueDate,
+                        eventId: event.id,
+                        isCompleted: false
+                    }
+                })
             })
+
+            await Promise.all(taskPromises)
 
             return { event, password }
         })

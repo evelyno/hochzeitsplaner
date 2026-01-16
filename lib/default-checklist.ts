@@ -1,106 +1,69 @@
-// Default checklist items for new events
-export const DEFAULT_CHECKLIST_ITEMS = [
-    // 12-10 Monate vorher
-    { category: "12_10_MONTHS", order: 1, description: "Budget festlegen" },
-    { category: "12_10_MONTHS", order: 2, description: "Groben Stil/Art der Hochzeit festlegen (Location, Größe, Motto)" },
-    { category: "12_10_MONTHS", order: 3, description: "Gästeliste (grob) erstellen" },
-    { category: "12_10_MONTHS", order: 4, description: "Wunschtermin + Alternativtermine festlegen" },
-    { category: "12_10_MONTHS", order: 5, description: "Location(s) besichtigen & buchen" },
-    { category: "12_10_MONTHS", order: 6, description: "Standesamt / Kirche / freie Trauung anfragen & Termin sichern" },
-    { category: "12_10_MONTHS", order: 7, description: "Fotograf:in / Videograf:in buchen" },
-    { category: "12_10_MONTHS", order: 8, description: "DJ/Band buchen" },
+// Default checklist items with relative due dates (days before wedding)
+// Negative numbers = days before wedding, positive = days after
+export const defaultChecklistItems = [
+    // 12+ Monate vorher
+    { title: 'Budget festlegen', category: '12_MONTHS', order: 1, daysBeforeWedding: 365 },
+    { title: 'Hochzeitsdatum wählen', category: '12_MONTHS', order: 2, daysBeforeWedding: 365 },
+    { title: 'Location besichtigen und buchen', category: '12_MONTHS', order: 3, daysBeforeWedding: 350 },
+    { title: 'Gästeliste erstellen (erste Version)', category: '12_MONTHS', order: 4, daysBeforeWedding: 340 },
+    { title: 'Hochzeitsplaner engagieren (optional)', category: '12_MONTHS', order: 5, daysBeforeWedding: 330 },
 
-    // 9-7 Monate vorher
-    { category: "9_7_MONTHS", order: 1, description: "Caterer/Restaurant fixieren (falls nicht über Location)" },
-    { category: "9_7_MONTHS", order: 2, description: "Trauredner:in buchen (bei freier Trauung)" },
-    { category: "9_7_MONTHS", order: 3, description: "Hochzeitskleid/Anzug aussuchen & bestellen" },
-    { category: "9_7_MONTHS", order: 4, description: "Save-the-Date (bei weiter Anreise) versenden" },
-    { category: "9_7_MONTHS", order: 5, description: "Grobe Tagesplanung erstellen" },
-    { category: "9_7_MONTHS", order: 6, description: "Deko-/Floristik-Konzept starten" },
-    { category: "9_7_MONTHS", order: 7, description: "Floristik anfragen" },
-    { category: "9_7_MONTHS", order: 8, description: "Torte anfragen" },
-    { category: "9_7_MONTHS", order: 9, description: "Styling (Hair/Make-up) anfragen" },
-    { category: "9_7_MONTHS", order: 10, description: "Kinderbetreuung anfragen (optional)" },
+    // 9-12 Monate vorher
+    { title: 'Brautkleid/Anzug aussuchen', category: '9_MONTHS', order: 1, daysBeforeWedding: 300 },
+    { title: 'Fotograf buchen', category: '9_MONTHS', order: 2, daysBeforeWedding: 290 },
+    { title: 'Videograf buchen (optional)', category: '9_MONTHS', order: 3, daysBeforeWedding: 290 },
+    { title: 'Catering auswählen', category: '9_MONTHS', order: 4, daysBeforeWedding: 280 },
+    { title: 'DJ/Band buchen', category: '9_MONTHS', order: 5, daysBeforeWedding: 270 },
 
-    // 6-5 Monate vorher
-    { category: "6_5_MONTHS", order: 1, description: "Einladungen gestalten/bestellen" },
-    { category: "6_5_MONTHS", order: 2, description: "Trauzeug:innen & wichtige Helfer festlegen" },
-    { category: "6_5_MONTHS", order: 3, description: "Eheringe aussuchen/bestellen" },
-    { category: "6_5_MONTHS", order: 4, description: "Hotels/Unterkünfte für Gäste reservieren (Kontingent)" },
-    { category: "6_5_MONTHS", order: 5, description: "Transport planen (Auto, Shuttle, etc.)" },
-    { category: "6_5_MONTHS", order: 6, description: "Menü + Getränke besprechen" },
-    { category: "6_5_MONTHS", order: 7, description: "Hochzeitstorte/Sweet Table planen" },
-    { category: "6_5_MONTHS", order: 8, description: "Musik-Wünsche sammeln (Party/Trauung)" },
+    // 6-9 Monate vorher
+    { title: 'Save-the-Date Karten verschicken', category: '6_MONTHS', order: 1, daysBeforeWedding: 240 },
+    { title: 'Florist auswählen', category: '6_MONTHS', order: 2, daysBeforeWedding: 230 },
+    { title: 'Hochzeitstorte bestellen', category: '6_MONTHS', order: 3, daysBeforeWedding: 220 },
+    { title: 'Trauringe aussuchen', category: '6_MONTHS', order: 4, daysBeforeWedding: 210 },
+    { title: 'Hochzeitswebsite erstellen', category: '6_MONTHS', order: 5, daysBeforeWedding: 200 },
 
-    // 4-3 Monate vorher
-    { category: "4_3_MONTHS", order: 1, description: "Einladungen verschicken" },
-    { category: "4_3_MONTHS", order: 2, description: "Brautkleid: erste Anprobe / Änderungen starten" },
-    { category: "4_3_MONTHS", order: 3, description: "Styling-Probetermin vereinbaren" },
-    { category: "4_3_MONTHS", order: 4, description: "Dekoration final planen + bestellen/mieten" },
-    { category: "4_3_MONTHS", order: 5, description: "Ablaufplan detaillieren (Trauung, Sektempfang, Dinner, Party)" },
-    { category: "4_3_MONTHS", order: 6, description: "Programmpunkte abstimmen (Reden, Spiele, Überraschungen)" },
-    { category: "4_3_MONTHS", order: 7, description: "Trauung vorbereiten (Lieder, Texte, Rituale)" },
-    { category: "4_3_MONTHS", order: 8, description: "Ehevorbereitungsgespräch (kirchlich, falls nötig)" },
+    // 4-6 Monate vorher
+    { title: 'Einladungen verschicken', category: '4_MONTHS', order: 1, daysBeforeWedding: 150 },
+    { title: 'Brautkleid/Anzug Anprobe', category: '4_MONTHS', order: 2, daysBeforeWedding: 140 },
+    { title: 'Dekoration planen', category: '4_MONTHS', order: 3, daysBeforeWedding: 130 },
+    { title: 'Friseur/Make-up Artist buchen', category: '4_MONTHS', order: 4, daysBeforeWedding: 120 },
+    { title: 'Hochzeitsreise buchen', category: '4_MONTHS', order: 5, daysBeforeWedding: 120 },
 
-    // 2 Monate vorher
-    { category: "2_MONTHS", order: 1, description: "Rückmeldungen der Gäste nachhalten" },
-    { category: "2_MONTHS", order: 2, description: "Sitzplan vorbereiten" },
-    { category: "2_MONTHS", order: 3, description: "Finales Gespräch mit Location/Caterer (Ablauf + Zeiten)" },
-    { category: "2_MONTHS", order: 4, description: "Gastgeschenke planen/bestellen (optional)" },
-    { category: "2_MONTHS", order: 5, description: "Notfallset zusammenstellen (Blasenpflaster, Nähset etc.)" },
-    { category: "2_MONTHS", order: 6, description: "Dokumente prüfen (Ausweise, Geburtsurkunden, Anmeldung Standesamt)" },
+    // 2-4 Monate vorher
+    { title: 'Menü finalisieren', category: '2_MONTHS', order: 1, daysBeforeWedding: 90 },
+    { title: 'Sitzplan erstellen', category: '2_MONTHS', order: 2, daysBeforeWedding: 80 },
+    { title: 'Playlist zusammenstellen', category: '2_MONTHS', order: 3, daysBeforeWedding: 75 },
+    { title: 'Geschenktisch organisieren', category: '2_MONTHS', order: 4, daysBeforeWedding: 70 },
+    { title: 'Trauzeugen Outfits koordinieren', category: '2_MONTHS', order: 5, daysBeforeWedding: 65 },
 
-    // 4-2 Wochen vorher
-    { category: "4_2_WEEKS", order: 1, description: "Finale Gästeanzahl an Location/Caterer melden" },
-    { category: "4_2_WEEKS", order: 2, description: "Sitzplan finalisieren + Tischkarten erstellen" },
-    { category: "4_2_WEEKS", order: 3, description: "Letzte Anprobe Kleid / Anzug" },
-    { category: "4_2_WEEKS", order: 4, description: "Eheringe abholen" },
-    { category: "4_2_WEEKS", order: 5, description: "Dienstleister final briefen (Zeitplan, Adressen, Ansprechpartner)" },
-    { category: "4_2_WEEKS", order: 6, description: "Playlist/Partyablauf mit DJ/Band abstimmen" },
-    { category: "4_2_WEEKS", order: 7, description: "Wetter-Plan B (bei Outdoor) festlegen" },
-    { category: "4_2_WEEKS", order: 8, description: "Trinkgeld-Umschläge vorbereiten" },
+    // 1-2 Monate vorher
+    { title: 'RSVP Deadline setzen', category: '1_MONTH', order: 1, daysBeforeWedding: 45 },
+    { title: 'Finale Gästezahl an Caterer', category: '1_MONTH', order: 2, daysBeforeWedding: 40 },
+    { title: 'Ablaufplan erstellen', category: '1_MONTH', order: 3, daysBeforeWedding: 35 },
+    { title: 'Probedinner organisieren', category: '1_MONTH', order: 4, daysBeforeWedding: 30 },
+    { title: 'Letzte Anprobe Brautkleid/Anzug', category: '1_MONTH', order: 5, daysBeforeWedding: 30 },
+
+    // 2-4 Wochen vorher
+    { title: 'Danksagungskarten vorbereiten', category: '2_WEEKS', order: 1, daysBeforeWedding: 21 },
+    { title: 'Namenskarten schreiben', category: '2_WEEKS', order: 2, daysBeforeWedding: 18 },
+    { title: 'Notfall-Kit packen', category: '2_WEEKS', order: 3, daysBeforeWedding: 14 },
+    { title: 'Finale Besprechung mit Dienstleistern', category: '2_WEEKS', order: 4, daysBeforeWedding: 14 },
+    { title: 'Trinkgelder vorbereiten', category: '2_WEEKS', order: 5, daysBeforeWedding: 10 },
 
     // 1 Woche vorher
-    { category: "1_WEEK", order: 1, description: "Deko/Kleinteile sortieren & packen (Kisten beschriften!)" },
-    { category: "1_WEEK", order: 2, description: "Ablaufplan ausdrucken (für Dienstleister + Trauzeugen)" },
-    { category: "1_WEEK", order: 3, description: "Beauty: Nägel, Haare färben etc." },
-    { category: "1_WEEK", order: 4, description: "Probe (Trauung/Einzug) falls möglich" },
-    { category: "1_WEEK", order: 5, description: "Koffer packen (für Hochzeitsnacht / Flitterwochen)" },
-    { category: "1_WEEK", order: 6, description: "Cash + Ausweise + Ringe sichern" },
+    { title: 'Wettervorhersage checken', category: '1_WEEK', order: 1, daysBeforeWedding: 7 },
+    { title: 'Ringe abholen', category: '1_WEEK', order: 2, daysBeforeWedding: 5 },
+    { title: 'Packliste für Hochzeitstag erstellen', category: '1_WEEK', order: 3, daysBeforeWedding: 5 },
+    { title: 'Gelübde schreiben/üben', category: '1_WEEK', order: 4, daysBeforeWedding: 4 },
+    { title: 'Entspannen und genießen!', category: '1_WEEK', order: 5, daysBeforeWedding: 2 },
 
-    // 1 Tag vorher
-    { category: "1_DAY", order: 1, description: "Location checken / ggf. dekorieren" },
-    { category: "1_DAY", order: 2, description: "Blumen abholen/liefern lassen" },
-    { category: "1_DAY", order: 3, description: "Outfits bügeln, Schuhe einlaufen" },
-    { category: "1_DAY", order: 4, description: "Handy laden, Notfallset bereit" },
-    { category: "1_DAY", order: 5, description: "Früh schlafen 😄" },
-
-    // Hochzeitstag
-    { category: "WEDDING_DAY", order: 1, description: "Frühstück + genug trinken" },
-    { category: "WEDDING_DAY", order: 2, description: "Getting Ready (Puffer einplanen)" },
-    { category: "WEDDING_DAY", order: 3, description: "Ringe, Dokumente, Gelübde nicht vergessen" },
-    { category: "WEDDING_DAY", order: 4, description: "Trauzeug:innen/Planer:in als Ansprechpartner festlegen" },
-    { category: "WEDDING_DAY", order: 5, description: "Genießen 💛" },
+    // Tag vorher
+    { title: 'Alle Dienstleister bestätigen', category: 'DAY_BEFORE', order: 1, daysBeforeWedding: 1 },
+    { title: 'Notfall-Nummern zusammenstellen', category: 'DAY_BEFORE', order: 2, daysBeforeWedding: 1 },
+    { title: 'Früh schlafen gehen', category: 'DAY_BEFORE', order: 3, daysBeforeWedding: 1 },
 
     // Nach der Hochzeit
-    { category: "AFTER_WEDDING", order: 1, description: "Geschenke & Karten sichern" },
-    { category: "AFTER_WEDDING", order: 2, description: "Dienstleister bewerten" },
-    { category: "AFTER_WEDDING", order: 3, description: "Dankeskarten verschicken" },
-    { category: "AFTER_WEDDING", order: 4, description: "Fotos auswählen & Album gestalten" },
-    { category: "AFTER_WEDDING", order: 5, description: "Namensänderung / Dokumente (optional)" },
-    { category: "AFTER_WEDDING", order: 6, description: "Abrechnung final machen" },
+    { title: 'Danksagungskarten verschicken', category: 'AFTER', order: 1, daysBeforeWedding: -14 },
+    { title: 'Brautkleid reinigen lassen', category: 'AFTER', order: 2, daysBeforeWedding: -7 },
+    { title: 'Namensänderung (falls gewünscht)', category: 'AFTER', order: 3, daysBeforeWedding: -30 },
 ]
-
-export const CATEGORY_LABELS: Record<string, string> = {
-    "12_10_MONTHS": "12–10 Monate vorher",
-    "9_7_MONTHS": "9–7 Monate vorher",
-    "6_5_MONTHS": "6–5 Monate vorher",
-    "4_3_MONTHS": "4–3 Monate vorher",
-    "2_MONTHS": "2 Monate vorher",
-    "4_2_WEEKS": "4–2 Wochen vorher",
-    "1_WEEK": "1 Woche vorher",
-    "1_DAY": "1 Tag vorher",
-    "WEDDING_DAY": "Hochzeitstag",
-    "AFTER_WEDDING": "Nach der Hochzeit",
-    "GENERAL": "Allgemein"
-}

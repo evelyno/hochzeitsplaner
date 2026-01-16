@@ -84,6 +84,7 @@ model Task {
   isCompleted Boolean  @default(false)
   category    String   @default("GENERAL") // Timeline category
   order       Int      @default(0) // Order within category
+  dueDate     DateTime? // When the task should be completed
   eventId     String
   event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Plus, Trash2, Music, Edit2 } from 'lucide-react'
+import { Plus, Trash2, Music, Edit2, Download } from 'lucide-react'
 import styles from '../client-dashboard.module.css'
 
 interface PlaylistSong {
@@ -107,6 +107,39 @@ export default function PlaylistPage() {
         setEditingSong(null)
     }
 
+    const handleSpotifyImport = async () => {
+        if (!spotifyUrl || !usersEventId) return
+
+        setIsImporting(true)
+        try {
+            const res = await fetch('/api/playlist/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    playlistUrl: spotifyUrl,
+                    eventId: usersEventId,
+                    category: importCategory
+                })
+            })
+
+            if (res.ok) {
+                const data = await res.json()
+                alert(`✅ ${data.count} Songs aus "${data.playlistName}" importiert!`)
+                fetchData()
+                setShowImportModal(false)
+                setSpotifyUrl('')
+            } else {
+                const error = await res.text()
+                alert('❌ Fehler beim Import: ' + error)
+            }
+        } catch (error) {
+            console.error('Error importing Spotify playlist:', error)
+            alert('❌ Fehler beim Import')
+        } finally {
+            setIsImporting(false)
+        }
+    }
+
     const groupedSongs = CATEGORIES.reduce((acc, cat) => {
         acc[cat] = songs.filter(s => s.category === cat)
         return acc
@@ -119,9 +152,14 @@ export default function PlaylistPage() {
                     <h1 className={styles.title}>Playlist</h1>
                     <p style={{ opacity: 0.7 }}>Musik für Ihren großen Tag</p>
                 </div>
-                <button onClick={() => openModal()} style={{ padding: '0.75rem 1.5rem', background: '#d4a373', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Plus size={18} /> Song hinzufügen
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button onClick={() => setShowImportModal(true)} style={{ padding: '0.75rem 1.5rem', background: '#1DB954', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Download size={18} /> Spotify importieren
+                    </button>
+                    <button onClick={() => openModal()} style={{ padding: '0.75rem 1.5rem', background: '#d4a373', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Plus size={18} /> Song hinzufügen
+                    </button>
+                </div>
             </div>
 
             {CATEGORIES.map(category => (
@@ -182,6 +220,42 @@ export default function PlaylistPage() {
                                 <button type="submit" style={{ flex: 1, padding: '0.75rem', background: '#d4a373', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}>Speichern</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {showImportModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => { setShowImportModal(false); setSpotifyUrl(''); }}>
+                    <div style={{ background: 'white', padding: '2rem', borderRadius: 16, width: '90%', maxWidth: 500 }} onClick={(e) => e.stopPropagation()}>
+                        <h2 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div style={{ width: 32, height: 32, background: '#1DB954', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Download size={18} color="white" />
+                            </div>
+                            Spotify Playlist importieren
+                        </h2>
+                        <p style={{ fontSize: '0.9rem', opacity: 0.7, marginBottom: '1.5rem' }}>Fügen Sie den Link zu einer öffentlichen Spotify Playlist ein</p>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Spotify Playlist URL</label>
+                            <input
+                                type="url"
+                                value={spotifyUrl}
+                                onChange={(e) => setSpotifyUrl(e.target.value)}
+                                placeholder="https://open.spotify.com/playlist/..."
+                                style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: 8 }}
+                            />
+                        </div>
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Kategorie für importierte Songs</label>
+                            <select value={importCategory} onChange={(e) => setImportCategory(e.target.value)} style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: 8 }}>
+                                {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                            </select>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button type="button" onClick={() => { setShowImportModal(false); setSpotifyUrl(''); }} style={{ flex: 1, padding: '0.75rem', background: '#f0f0f0', border: 'none', borderRadius: 8, cursor: 'pointer' }}>Abbrechen</button>
+                            <button onClick={handleSpotifyImport} disabled={!spotifyUrl || isImporting} style={{ flex: 1, padding: '0.75rem', background: '#1DB954', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', opacity: (!spotifyUrl || isImporting) ? 0.5 : 1 }}>
+                                {isImporting ? 'Importiere...' : 'Importieren'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import styles from '../client-dashboard.module.css'
-import { Plus, Search, Download, Edit2, Trash2, X } from 'lucide-react'
+import { Plus, Search, Download, Edit2, Trash2, X, CheckSquare, Square } from 'lucide-react'
 
 interface Guest {
     id: string
@@ -38,14 +38,21 @@ const MEAL_LABELS: Record<string, string> = {
 export default function GuestListPage() {
     const [guests, setGuests] = useState<Guest[]>([])
     const [filteredGuests, setFilteredGuests] = useState<Guest[]>([])
+    const [selectedGuests, setSelectedGuests] = useState<Set<string>>(new Set())
     const [searchTerm, setSearchTerm] = useState('')
     const [filterRSVP, setFilterRSVP] = useState('ALL')
     const [filterGroup, setFilterGroup] = useState('ALL')
     const [showModal, setShowModal] = useState(false)
+    const [showBulkModal, setShowBulkModal] = useState(false)
     const [editingGuest, setEditingGuest] = useState<Guest | null>(null)
     const [eventId, setEventId] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [bulkAction, setBulkAction] = useState({
+        rsvpStatus: '',
+        tableNumber: '',
+        tableGroup: ''
+    })
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -145,6 +152,54 @@ export default function GuestListPage() {
         }
     }
 
+    const handleBulkUpdate = async () => {
+        if (selectedGuests.size === 0 || !eventId || isSubmitting) return
+
+        setIsSubmitting(true)
+        try {
+            // Update each selected guest
+            const updates = Array.from(selectedGuests).map(guestId => {
+                const updateData: any = { id: guestId }
+                if (bulkAction.rsvpStatus) updateData.rsvpStatus = bulkAction.rsvpStatus
+                if (bulkAction.tableNumber) updateData.tableNumber = parseInt(bulkAction.tableNumber)
+                if (bulkAction.tableGroup) updateData.tableGroup = bulkAction.tableGroup
+
+                return fetch('/api/guests', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updateData)
+                })
+            })
+
+            await Promise.all(updates)
+            await fetchGuests(eventId)
+            setShowBulkModal(false)
+            setSelectedGuests(new Set())
+            setBulkAction({ rsvpStatus: '', tableNumber: '', tableGroup: '' })
+        } catch (error) {
+            console.error('Failed to bulk update guests:', error)
+        } finally {
+            setIsSubmitting(false)
+        }
+    }
+
+    const handleBulkDelete = async () => {
+        if (selectedGuests.size === 0) return
+        if (!confirm(`Möchten Sie wirklich ${selectedGuests.size} Gäste löschen?`)) return
+
+        try {
+            const deletes = Array.from(selectedGuests).map(guestId =>
+                fetch(`/api/guests?id=${guestId}`, { method: 'DELETE' })
+            )
+
+            await Promise.all(deletes)
+            if (eventId) await fetchGuests(eventId)
+            setSelectedGuests(new Set())
+        } catch (error) {
+            console.error('Failed to bulk delete guests:', error)
+        }
+    }
+
     const deleteGuest = async (id: string) => {
         if (!confirm('Möchten Sie diesen Gast wirklich löschen?')) return
         try {
@@ -189,6 +244,24 @@ export default function GuestListPage() {
             hasChildren: false,
             childrenCount: '0'
         })
+    }
+
+    const toggleSelectAll = () => {
+        if (selectedGuests.size === filteredGuests.length) {
+            setSelectedGuests(new Set())
+        } else {
+            setSelectedGuests(new Set(filteredGuests.map(g => g.id)))
+        }
+    }
+
+    const toggleSelectGuest = (guestId: string) => {
+        const newSelected = new Set(selectedGuests)
+        if (newSelected.has(guestId)) {
+            newSelected.delete(guestId)
+        } else {
+            newSelected.add(guestId)
+        }
+        setSelectedGuests(newSelected)
     }
 
     const exportToCSV = () => {
@@ -243,6 +316,35 @@ export default function GuestListPage() {
                     </button>
                 </div>
             </div>
+
+            {/* Bulk Actions Bar */}
+            {selectedGuests.size > 0 && (
+                <div style={{ background: '#fff5eb', border: '1px solid #d4a373', borderRadius: 8, padding: '1rem 1.5rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontWeight: 600, color: '#d4a373' }}>
+                        {selectedGuests.size} Gäste ausgewählt
+                    </div>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <button
+                            onClick={() => setShowBulkModal(true)}
+                            style={{ background: '#d4a373', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: 6, cursor: 'pointer', fontSize: '0.9rem' }}
+                        >
+                            Bulk-Bearbeitung
+                        </button>
+                        <button
+                            onClick={handleBulkDelete}
+                            style={{ background: '#f44336', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: 6, cursor: 'pointer', fontSize: '0.9rem' }}
+                        >
+                            Ausgewählte löschen
+                        </button>
+                        <button
+                            onClick={() => setSelectedGuests(new Set())}
+                            style={{ background: 'transparent', color: '#666', border: '1px solid #ddd', padding: '0.5rem 1rem', borderRadius: 6, cursor: 'pointer', fontSize: '0.9rem' }}
+                        >
+                            Abbrechen
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Statistics Cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
@@ -316,6 +418,11 @@ export default function GuestListPage() {
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
                             <tr style={{ textAlign: 'left', color: '#999', fontSize: '0.8rem', borderBottom: '1px solid #eee', textTransform: 'uppercase', letterSpacing: 1 }}>
+                                <th style={{ padding: '1rem 1.5rem', fontWeight: 600, width: 40 }}>
+                                    <button onClick={toggleSelectAll} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}>
+                                        {selectedGuests.size === filteredGuests.length ? <CheckSquare size={20} color="#d4a373" /> : <Square size={20} color="#999" />}
+                                    </button>
+                                </th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>Name</th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>Kontakt</th>
                                 <th style={{ padding: '1rem 1.5rem', fontWeight: 600 }}>RSVP</th>
@@ -327,7 +434,12 @@ export default function GuestListPage() {
                         </thead>
                         <tbody>
                             {filteredGuests.map((guest) => (
-                                <tr key={guest.id} style={{ borderBottom: '1px solid #f9f9f9' }}>
+                                <tr key={guest.id} style={{ borderBottom: '1px solid #f9f9f9', background: selectedGuests.has(guest.id) ? '#fff5eb' : 'transparent' }}>
+                                    <td style={{ padding: '1rem 1.5rem' }}>
+                                        <button onClick={() => toggleSelectGuest(guest.id)} style={{ border: 'none', background: 'transparent', cursor: 'pointer', padding: 0 }}>
+                                            {selectedGuests.has(guest.id) ? <CheckSquare size={20} color="#d4a373" /> : <Square size={20} color="#999" />}
+                                        </button>
+                                    </td>
                                     <td style={{ padding: '1rem 1.5rem' }}>
                                         <div style={{ fontWeight: 600 }}>{guest.name}</div>
                                         {guest.hasChildren && <div style={{ fontSize: '0.75rem', color: '#999' }}>{guest.childrenCount} Kind(er)</div>}
@@ -430,6 +542,39 @@ export default function GuestListPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Bulk Edit Modal */}
+            {showBulkModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+                    <div style={{ background: 'white', borderRadius: 12, padding: '2rem', maxWidth: 500, width: '90%' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0 }}>Bulk-Bearbeitung ({selectedGuests.size} Gäste)</h2>
+                            <button onClick={() => setShowBulkModal(false)} style={{ border: 'none', background: 'transparent', cursor: 'pointer' }}><X size={24} /></button>
+                        </div>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>RSVP Status ändern</label>
+                            <select value={bulkAction.rsvpStatus} onChange={(e) => setBulkAction({ ...bulkAction, rsvpStatus: e.target.value })} style={{ width: '100%', padding: '0.75rem', border: '1px solid #eee', borderRadius: 8 }}>
+                                <option value="">-- Nicht ändern --</option>
+                                {Object.entries(RSVP_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                            </select>
+                        </div>
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Tischnummer zuweisen</label>
+                            <input type="number" value={bulkAction.tableNumber} onChange={(e) => setBulkAction({ ...bulkAction, tableNumber: e.target.value })} placeholder="Leer lassen für keine Änderung" style={{ width: '100%', padding: '0.75rem', border: '1px solid #eee', borderRadius: 8 }} />
+                        </div>
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Gruppe zuweisen</label>
+                            <input type="text" value={bulkAction.tableGroup} onChange={(e) => setBulkAction({ ...bulkAction, tableGroup: e.target.value })} placeholder="Leer lassen für keine Änderung" style={{ width: '100%', padding: '0.75rem', border: '1px solid #eee', borderRadius: 8 }} />
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button onClick={() => setShowBulkModal(false)} style={{ flex: 1, background: '#f5f6fa', border: '1px solid #eee', padding: '0.75rem', borderRadius: 8, cursor: 'pointer' }}>Abbrechen</button>
+                            <button onClick={handleBulkUpdate} disabled={isSubmitting} style={{ flex: 1, background: isSubmitting ? '#ccc' : '#d4a373', color: 'white', border: 'none', padding: '0.75rem', borderRadius: 8, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}>
+                                {isSubmitting ? 'Aktualisiert...' : 'Anwenden'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

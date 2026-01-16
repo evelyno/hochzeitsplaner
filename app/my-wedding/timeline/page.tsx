@@ -26,6 +26,7 @@ const CATEGORIES = {
 export default function TimelinePage() {
     const [events, setEvents] = useState<TimelineEvent[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const [showModal, setShowModal] = useState(false)
     const [editingEvent, setEditingEvent] = useState<TimelineEvent | null>(null)
     const [eventId, setEventId] = useState<string | null>(null)
@@ -73,10 +74,11 @@ export default function TimelinePage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!eventId) return
+        if (!eventId || isSubmitting) return
 
+        setIsSubmitting(true)
         try {
-            const url = editingEvent ? '/api/timeline' : '/api/timeline'
+            const url = '/api/timeline'
             const method = editingEvent ? 'PATCH' : 'POST'
             const body = editingEvent
                 ? { id: editingEvent.id, ...formData }
@@ -89,13 +91,15 @@ export default function TimelinePage() {
             })
 
             if (res.ok) {
-                fetchTimelineEvents(eventId)
+                await fetchTimelineEvents(eventId)
                 setShowModal(false)
                 setEditingEvent(null)
                 setFormData({ time: '', title: '', description: '', duration: '', location: '', category: 'OTHER' })
             }
         } catch (error) {
             console.error('Failed to save timeline event:', error)
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -228,7 +232,13 @@ export default function TimelinePage() {
                             </div>
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 <button type="button" onClick={() => setShowModal(false)} style={{ flex: 1, background: '#f5f6fa', border: '1px solid #eee', padding: '0.75rem', borderRadius: 8, cursor: 'pointer' }}>Abbrechen</button>
-                                <button type="submit" style={{ flex: 1, background: '#d4a373', color: 'white', border: 'none', padding: '0.75rem', borderRadius: 8, cursor: 'pointer' }}>Speichern</button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    style={{ flex: 1, background: isSubmitting ? '#ccc' : '#d4a373', color: 'white', border: 'none', padding: '0.75rem', borderRadius: 8, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
+                                >
+                                    {isSubmitting ? 'Speichert...' : 'Speichern'}
+                                </button>
                             </div>
                         </form>
                     </div>

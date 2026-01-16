@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef } from 'react'
-import { Plus, Trash2, Edit2, Users as UsersIcon } from 'lucide-react'
+import { Plus, Trash2, Edit2, Users as UsersIcon, X } from 'lucide-react'
 import styles from '../client-dashboard.module.css'
 
 interface Table {
@@ -31,6 +31,8 @@ export default function SeatingPage() {
     const [draggingTable, setDraggingTable] = useState<string | null>(null)
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
     const [showEditModal, setShowEditModal] = useState(false)
+    const [showAssignModal, setShowAssignModal] = useState(false)
+    const [selectedSeat, setSelectedSeat] = useState<{ tableId: string, seatNumber: number } | null>(null)
     const [editFormData, setEditFormData] = useState({ name: '', capacity: 8, shape: 'ROUND' })
     const [draggedGuest, setDraggedGuest] = useState<Guest | null>(null)
     const canvasRef = useRef<HTMLDivElement>(null)
@@ -100,25 +102,31 @@ export default function SeatingPage() {
         }
     }
 
-    const handleMouseDown = (e: React.MouseEvent, tableId: string) => {
+    const handleDragStart = (e: React.MouseEvent | React.TouchEvent, tableId: string) => {
         e.stopPropagation()
         const table = tables.find(t => t.id === tableId)
         if (!table || !canvasRef.current) return
 
         const rect = canvasRef.current.getBoundingClientRect()
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+
         setDraggingTable(tableId)
         setDragOffset({
-            x: e.clientX - rect.left - table.x,
-            y: e.clientY - rect.top - table.y
+            x: clientX - rect.left - table.x,
+            y: clientY - rect.top - table.y
         })
     }
 
-    const handleMouseMove = (e: React.MouseEvent) => {
+    const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
         if (!draggingTable || !canvasRef.current) return
 
         const rect = canvasRef.current.getBoundingClientRect()
-        const newX = e.clientX - rect.left - dragOffset.x
-        const newY = e.clientY - rect.top - dragOffset.y
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+
+        const newX = clientX - rect.left - dragOffset.x
+        const newY = clientY - rect.top - dragOffset.y
 
         setTables(tables.map(t =>
             t.id === draggingTable
@@ -127,7 +135,7 @@ export default function SeatingPage() {
         ))
     }
 
-    const handleMouseUp = async () => {
+    const handleDragEnd = async () => {
         if (!draggingTable) return
 
         const table = tables.find(t => t.id === draggingTable)
@@ -153,7 +161,11 @@ export default function SeatingPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: guestId, tableId, seatNumber })
             })
-            if (res.ok) fetchData()
+            if (res.ok) {
+                fetchData()
+                setShowAssignModal(false)
+                setSelectedSeat(null)
+            }
         } catch (error) {
             console.error('Error assigning guest:', error)
         }
@@ -197,6 +209,17 @@ export default function SeatingPage() {
         }
     }
 
+    const handleSeatClick = (tableId: string, seatNumber: number, assignedGuest: Guest | undefined) => {
+        if (assignedGuest) {
+            if (confirm(`${assignedGuest.name} entfernen?`)) {
+                unassignGuest(assignedGuest.id)
+            }
+        } else {
+            setSelectedSeat({ tableId, seatNumber })
+            setShowAssignModal(true)
+        }
+    }
+
     const handleSeatDrop = (e: React.DragEvent, tableId: string, seatNumber: number) => {
         e.preventDefault()
         e.stopPropagation()
@@ -228,6 +251,10 @@ export default function SeatingPage() {
                     key={`${table.id}-seat-${i}`}
                     onDrop={(e) => handleSeatDrop(e, table.id, i + 1)}
                     onDragOver={handleSeatDragOver}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        handleSeatClick(table.id, i + 1, assignedGuest)
+                    }}
                     style={{
                         position: 'absolute',
                         left: seatX,
@@ -247,14 +274,6 @@ export default function SeatingPage() {
                         zIndex: 10,
                         transition: 'all 0.2s'
                     }}
-                    onClick={(e) => {
-                        e.stopPropagation()
-                        if (assignedGuest) {
-                            if (confirm(`${assignedGuest.name} entfernen?`)) {
-                                unassignGuest(assignedGuest.id)
-                            }
-                        }
-                    }}
                     title={assignedGuest ? assignedGuest.name : `Platz ${i + 1}`}
                 >
                     {assignedGuest ? assignedGuest.name.split(' ').map(n => n[0]).join('').slice(0, 2) : i + 1}
@@ -269,7 +288,7 @@ export default function SeatingPage() {
 
     return (
         <div className={styles.main}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
                 <div>
                     <h1 className={styles.title}>Sitzplan</h1>
                     <p style={{ opacity: 0.7 }}>Ziehen Sie Tische und weisen Sie Gäste Plätzen zu</p>
@@ -279,18 +298,21 @@ export default function SeatingPage() {
                 </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '2rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 768 ? '1fr 320px' : '1fr', gap: '2rem' }}>
                 <div
                     ref={canvasRef}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
-                    style={{ background: '#f9f9f9', borderRadius: 16, padding: '2rem', minHeight: 700, position: 'relative', cursor: draggingTable ? 'grabbing' : 'default', overflow: 'hidden' }}
+                    onMouseMove={handleDragMove}
+                    onMouseUp={handleDragEnd}
+                    onMouseLeave={handleDragEnd}
+                    onTouchMove={handleDragMove}
+                    onTouchEnd={handleDragEnd}
+                    style={{ background: '#f9f9f9', borderRadius: 16, padding: '1rem', minHeight: window.innerWidth > 768 ? 700 : 400, position: 'relative', cursor: draggingTable ? 'grabbing' : 'default', overflow: 'hidden', touchAction: 'none' }}
                 >
                     {tables.map(table => (
                         <React.Fragment key={table.id}>
                             <div
-                                onMouseDown={(e) => handleMouseDown(e, table.id)}
+                                onMouseDown={(e) => handleDragStart(e, table.id)}
+                                onTouchStart={(e) => handleDragStart(e, table.id)}
                                 onClick={(e) => {
                                     e.stopPropagation()
                                     setSelectedTable(table)
@@ -311,7 +333,8 @@ export default function SeatingPage() {
                                     boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
                                     color: selectedTable?.id === table.id ? 'white' : '#333',
                                     userSelect: 'none',
-                                    zIndex: draggingTable === table.id ? 100 : 20
+                                    zIndex: draggingTable === table.id ? 100 : 20,
+                                    touchAction: 'none'
                                 }}
                             >
                                 <div style={{ textAlign: 'center', pointerEvents: 'none' }}>
@@ -335,11 +358,11 @@ export default function SeatingPage() {
                                 <p><strong>Kapazität:</strong> {selectedTable.capacity} Plätze</p>
                                 <p><strong>Belegt:</strong> {selectedTable.guests?.length || 0} Gäste</p>
                             </div>
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <button onClick={() => openEditModal(selectedTable)} style={{ flex: 1, padding: '0.5rem', background: '#f0f0f0', border: 'none', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                <button onClick={() => openEditModal(selectedTable)} style={{ flex: 1, minWidth: 120, padding: '0.5rem', background: '#f0f0f0', border: 'none', borderRadius: 6, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                                     <Edit2 size={16} /> Bearbeiten
                                 </button>
-                                <button onClick={() => deleteTable(selectedTable.id)} style={{ flex: 1, padding: '0.5rem', background: '#ffe5e5', border: 'none', borderRadius: 6, cursor: 'pointer', color: '#ff7675' }}>
+                                <button onClick={() => deleteTable(selectedTable.id)} style={{ flex: 1, minWidth: 120, padding: '0.5rem', background: '#ffe5e5', border: 'none', borderRadius: 6, cursor: 'pointer', color: '#ff7675' }}>
                                     <Trash2 size={16} style={{ marginRight: 4, verticalAlign: 'middle' }} /> Löschen
                                 </button>
                             </div>
@@ -364,12 +387,14 @@ export default function SeatingPage() {
                         <h3 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <UsersIcon size={20} /> Nicht zugewiesen ({unassignedGuests.length})
                         </h3>
-                        <p style={{ fontSize: '0.85rem', opacity: 0.7, marginBottom: '1rem' }}>Ziehen Sie Gäste auf freie Plätze</p>
+                        <p style={{ fontSize: '0.85rem', opacity: 0.7, marginBottom: '1rem' }}>
+                            {window.innerWidth > 768 ? 'Ziehen Sie Gäste auf freie Plätze' : 'Tippen Sie auf einen Platz, um einen Gast zuzuweisen'}
+                        </p>
                         <div style={{ maxHeight: 400, overflowY: 'auto' }}>
                             {unassignedGuests.map(guest => (
                                 <div
                                     key={guest.id}
-                                    draggable
+                                    draggable={window.innerWidth > 768}
                                     onDragStart={(e) => {
                                         setDraggedGuest(guest)
                                         e.dataTransfer.effectAllowed = 'move'
@@ -380,7 +405,7 @@ export default function SeatingPage() {
                                         background: '#f9f9f9',
                                         borderRadius: 8,
                                         marginBottom: '0.5rem',
-                                        cursor: 'grab',
+                                        cursor: window.innerWidth > 768 ? 'grab' : 'default',
                                         fontSize: '0.9rem',
                                         border: '2px dashed transparent',
                                         transition: 'all 0.2s'
@@ -400,8 +425,8 @@ export default function SeatingPage() {
             </div>
 
             {showEditModal && selectedTable && (
-                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setShowEditModal(false)}>
-                    <div style={{ background: 'white', padding: '2rem', borderRadius: 16, width: '90%', maxWidth: 400 }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }} onClick={() => setShowEditModal(false)}>
+                    <div style={{ background: 'white', padding: '2rem', borderRadius: 16, width: '100%', maxWidth: 400 }} onClick={(e) => e.stopPropagation()}>
                         <h2 style={{ marginTop: 0 }}>Tisch bearbeiten</h2>
                         <form onSubmit={handleEditSubmit}>
                             <div style={{ marginBottom: '1rem' }}>
@@ -424,6 +449,38 @@ export default function SeatingPage() {
                                 <button type="submit" style={{ flex: 1, padding: '0.75rem', background: '#d4a373', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}>Speichern</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {showAssignModal && selectedSeat && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }} onClick={() => { setShowAssignModal(false); setSelectedSeat(null); }}>
+                    <div style={{ background: 'white', padding: '2rem', borderRadius: 16, width: '100%', maxWidth: 400, maxHeight: '80vh', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <h2 style={{ margin: 0 }}>Gast zuweisen</h2>
+                            <button onClick={() => { setShowAssignModal(false); setSelectedSeat(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <p style={{ fontSize: '0.9rem', opacity: 0.7, marginBottom: '1.5rem' }}>
+                            Wählen Sie einen Gast für Platz {selectedSeat.seatNumber}
+                        </p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            {unassignedGuests.map(guest => (
+                                <button
+                                    key={guest.id}
+                                    onClick={() => assignGuestToSeat(guest.id, selectedSeat.tableId, selectedSeat.seatNumber)}
+                                    style={{ padding: '1rem', background: '#f9f9f9', border: '1px solid #ddd', borderRadius: 8, cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s' }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = '#d4a373'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = '#f9f9f9'}
+                                >
+                                    {guest.name}
+                                </button>
+                            ))}
+                            {unassignedGuests.length === 0 && (
+                                <p style={{ textAlign: 'center', opacity: 0.5, padding: '2rem' }}>Keine nicht zugewiesenen Gäste</p>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
